@@ -17,6 +17,10 @@ dist-ssr
 .env.*
 !.env.example
 
+# Server-specific deployment docs — kept local, never committed (IPs, ports, paths)
+/DEPLOYMENT.md
+/deploy/welllite-host-nginx.conf
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
