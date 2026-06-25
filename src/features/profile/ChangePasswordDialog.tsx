@@ -17,7 +17,9 @@ import {
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { authApi } from '@/lib/api/auth'
+import { isPreAuth } from '@/lib/api/types'
 import { messageForError } from '@/lib/errorCodes'
+import { setPreAuthToken } from '@/lib/tokens'
 import { useAuth } from '@/providers/auth-context'
 
 const schema = z
@@ -36,7 +38,11 @@ type Values = z.infer<typeof schema>
  * Change the signed-in user's password. There is no authenticated
  * change-password endpoint, so this reuses the password-reset flow with the
  * session's own email pre-filled: send an OTP → verify → set new password.
- * The backend revokes all refresh tokens on reset, so we sign out afterwards.
+ *
+ * The backend revokes ALL refresh tokens on reset (including this session's), so
+ * after the change we silently re-authenticate with the new password and restore
+ * the same tenant scope — keeping the user signed in rather than bouncing them to
+ * the login screen. If re-auth fails, we fall back to a clean sign-out.
  */
 export function ChangePasswordDialog({
   open,
@@ -45,7 +51,14 @@ export function ChangePasswordDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
-  const { user, logout } = useAuth()
+  const {
+    user,
+    claims,
+    logout,
+    applyLoginResponse,
+    selectMembership,
+    switchTenant,
+  } = useAuth()
   const [phase, setPhase] = useState<'request' | 'reset'>('request')
   const [sending, setSending] = useState(false)
   const [topError, setTopError] = useState<string | null>(null)
@@ -83,14 +96,52 @@ export function ChangePasswordDialog({
   const submit = async (values: Values) => {
     if (!user) return
     setTopError(null)
+
+    // Snapshot the current scope so we can restore it after re-authenticating.
+    const email = user.email
+    const deviceHint = navigator.userAgent.slice(0, 60)
+    const prevMembershipId = claims?.membership_id ?? null
+    const prevClientId = claims?.client_id ?? null
+    const wasSuperAdmin = user.is_super_admin
+
+    // Step 1 — verify the OTP and set the new password.
     try {
-      const { reset_token } = await authApi.verifyResetOtp(user.email, values.code)
+      const { reset_token } = await authApi.verifyResetOtp(email, values.code)
       await authApi.resetPassword(reset_token, values.new_password)
+    } catch (err) {
+      setTopError(messageForError(err))
+      return
+    }
+
+    // Step 2 — the reset revoked every session, so silently sign back in with the
+    // new password and restore the previous tenant scope. Keeps the user in place.
+    try {
+      const res = await authApi.login({
+        email,
+        password: values.new_password,
+        device_hint: deviceHint,
+      })
+      if (isPreAuth(res)) {
+        if (prevMembershipId) {
+          setPreAuthToken(res.pre_auth_token)
+          await selectMembership(prevMembershipId, deviceHint)
+        } else {
+          // No prior membership to restore — fall through to org selection.
+          await applyLoginResponse(res)
+        }
+      } else {
+        await applyLoginResponse(res)
+        if (wasSuperAdmin && prevClientId) {
+          await switchTenant(prevClientId)
+        }
+      }
+      toast.success('Password changed.')
+      onOpenChange(false)
+    } catch {
+      // Re-auth failed unexpectedly — fall back to a clean sign-out.
       toast.success('Password changed. Please sign in again.')
       onOpenChange(false)
       await logout()
-    } catch (err) {
-      setTopError(messageForError(err))
     }
   }
 
@@ -115,8 +166,8 @@ export function ChangePasswordDialog({
         {phase === 'request' ? (
           <>
             <p className="text-sm text-muted-foreground">
-              For security, changing your password is verified by email. After it
-              changes you'll be signed out and need to sign in again.
+              For security, changing your password is verified by email. You'll
+              stay signed in on this device once it's done.
             </p>
             <DialogFooter>
               <Button
