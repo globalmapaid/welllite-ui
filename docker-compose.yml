@@ -1,0 +1,12 @@
+services:
+  ui:
+    build:
+      context: .
+      target: prod
+      args:
+        # Same-origin by default — host nginx routes /api to welllite-api.
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api/v1}
+    container_name: welllite-ui
+    ports:
+      - "127.0.0.1:8002:80"
+    restart: unless-stopped
