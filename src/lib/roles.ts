@@ -6,3 +6,6 @@ export const ROLE_LABELS: Record<Role, string> = {
   supervisor: 'Supervisor',
   member: 'Member',
 }
+
+/** All assignable roles, in descending order of authority. */
+export const ROLES: readonly Role[] = ['client_admin', 'supervisor', 'member']

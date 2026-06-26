@@ -30,6 +30,16 @@ export const CODE_MESSAGES: Record<string, string> = {
   // Clients
   CLIENT_NOT_FOUND: 'That organisation could not be found.',
 
+  // Tenant member management
+  CLIENT_MEMBER_ASSIGN_ACCEPTED:
+    "If that account exists, they've been added to your team.",
+  AUTH_CLIENT_ADMIN_REQUIRED:
+    'Only organisation admins can manage team members.',
+  CLIENT_MEMBER_NOT_FOUND: 'That person is not a member of this organisation.',
+  CLIENT_CANNOT_MODIFY_SELF: 'You cannot change or remove your own membership.',
+  CLIENT_LAST_ADMIN:
+    'This is the only organisation admin. Promote another admin before removing or demoting them.',
+
   // Validation (root + common field codes)
   VALIDATION_FAILED: 'Please correct the highlighted fields.',
   VALIDATION_MISSING: 'This field is required.',
