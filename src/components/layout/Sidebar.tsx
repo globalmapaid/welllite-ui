@@ -3,6 +3,7 @@ import {
   Gauge,
   LayoutDashboard,
   UserCircle,
+  Users,
   type LucideIcon,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -17,19 +18,25 @@ interface NavItem {
   end?: boolean
   soon?: boolean
   superAdmin?: boolean
+  clientAdmin?: boolean
 }
 
 const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/organisations', label: 'Organisations', icon: Database, superAdmin: true },
+  { to: '/members', label: 'Team', icon: Users, clientAdmin: true },
   { to: '/wells', label: 'Wells', icon: Gauge, soon: true },
   { to: '/readings', label: 'Readings', icon: Gauge, soon: true },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ]
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { isSuperAdmin } = useAuth()
-  const items = NAV.filter((i) => !i.superAdmin || isSuperAdmin)
+  const { isSuperAdmin, role } = useAuth()
+  const isClientAdmin = role === 'client_admin'
+  const items = NAV.filter(
+    (i) =>
+      (!i.superAdmin || isSuperAdmin) && (!i.clientAdmin || isClientAdmin),
+  )
 
   return (
     <div className="flex h-full flex-col border-r border-sidebar-border bg-sidebar">

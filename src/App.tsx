@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { RequireClientAdmin } from '@/components/RequireClientAdmin'
 import { RequireSuperAdmin } from '@/components/RequireSuperAdmin'
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
@@ -12,6 +13,7 @@ import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { NotFoundPage } from '@/features/NotFoundPage'
 import { ReadingsPage } from '@/features/placeholders/ReadingsPage'
 import { WellsPage } from '@/features/placeholders/WellsPage'
+import { MembersPage } from '@/features/members/MembersPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { OrganisationsPage } from '@/features/tenants/OrganisationsPage'
 
@@ -33,6 +35,9 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/wells" element={<WellsPage />} />
           <Route path="/readings" element={<ReadingsPage />} />
+          <Route element={<RequireClientAdmin />}>
+            <Route path="/members" element={<MembersPage />} />
+          </Route>
           <Route element={<RequireSuperAdmin />}>
             <Route path="/organisations" element={<OrganisationsPage />} />
           </Route>

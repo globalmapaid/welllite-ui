@@ -68,6 +68,20 @@ export interface ClientTenant {
   updated_at: string
 }
 
+/** A user's membership in the current tenant (active or soft-removed). */
+export interface Member {
+  id: string // membership id (row key)
+  user_id: string // used in PATCH/DELETE paths
+  client_id: string
+  email: string
+  first_name: string
+  last_name: string
+  role: Role
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 // ---- Request payloads ----
 
 export interface RegisterRequest {
