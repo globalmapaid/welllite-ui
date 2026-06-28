@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   UserCircle,
   Users,
+  UsersRound,
   type LucideIcon,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
@@ -24,6 +25,7 @@ interface NavItem {
 const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/organisations', label: 'Organisations', icon: Database, superAdmin: true },
+  { to: '/users', label: 'Users', icon: UsersRound, superAdmin: true },
   { to: '/members', label: 'Team', icon: Users, clientAdmin: true },
   { to: '/wells', label: 'Wells', icon: Gauge, soon: true },
   { to: '/readings', label: 'Readings', icon: Gauge, soon: true },

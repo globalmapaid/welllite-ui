@@ -16,6 +16,7 @@ import { WellsPage } from '@/features/placeholders/WellsPage'
 import { MembersPage } from '@/features/members/MembersPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { OrganisationsPage } from '@/features/tenants/OrganisationsPage'
+import { UsersPage } from '@/features/users/UsersPage'
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
           </Route>
           <Route element={<RequireSuperAdmin />}>
             <Route path="/organisations" element={<OrganisationsPage />} />
+            <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>
       </Route>
