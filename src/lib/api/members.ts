@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { Member, Role } from './types'
+import type { Member, PaginatedMembers, Role } from './types'
 
 export interface AssignMemberPayload {
   email: string
@@ -11,13 +11,45 @@ export interface UpdateMemberPayload {
   is_active?: boolean
 }
 
+export interface ListMembersParams {
+  /** Case-insensitive substring over email / first name / last name. */
+  search?: string
+  /** Omit for both active and removed; true/false to filter. */
+  is_active?: boolean
+  limit?: number
+  offset?: number
+}
+
+const DEFAULT_LIMIT = 50
+
 /**
  * Tenant member management (client-admin only). The tenant is taken from the
  * access token's scope on the server — never send a client_id.
  */
 export const membersApi = {
-  /** List all members of the current tenant (active and soft-removed). */
-  list: () => request<Member[]>('/clients/members', { auth: 'access' }),
+  /**
+   * List members of the current tenant, paginated and searchable. Tolerant
+   * reader: accepts the pagination envelope, or normalises a legacy bare array
+   * (so it keeps working across the backend deploy boundary).
+   */
+  list: async (params: ListMembersParams = {}): Promise<PaginatedMembers> => {
+    const limit = params.limit ?? DEFAULT_LIMIT
+    const offset = params.offset ?? 0
+    const qs = new URLSearchParams()
+    if (params.search) qs.set('search', params.search)
+    if (params.is_active !== undefined) qs.set('is_active', String(params.is_active))
+    qs.set('limit', String(limit))
+    qs.set('offset', String(offset))
+
+    const res = await request<PaginatedMembers | Member[]>(
+      `/clients/members?${qs.toString()}`,
+      { auth: 'access' },
+    )
+    if (Array.isArray(res)) {
+      return { items: res, total: res.length, limit: res.length || limit, offset: 0 }
+    }
+    return res
+  },
 
   /**
    * Assign a member by email. Returns 201 with the created (or reactivated)

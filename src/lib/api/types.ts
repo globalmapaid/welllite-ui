@@ -82,6 +82,14 @@ export interface Member {
   updated_at: string
 }
 
+/** Paginated list envelope returned by GET /clients/members. */
+export interface PaginatedMembers {
+  items: Member[]
+  total: number
+  limit: number
+  offset: number
+}
+
 // ---- Request payloads ----
 
 export interface RegisterRequest {

@@ -1,15 +1,26 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   membersApi,
   type AssignMemberPayload,
+  type ListMembersParams,
   type UpdateMemberPayload,
 } from '@/lib/api/members'
 
 const MEMBERS_KEY = ['members'] as const
 
-/** All members of the current tenant (active + soft-removed). */
-export function useMembers() {
-  return useQuery({ queryKey: MEMBERS_KEY, queryFn: membersApi.list })
+/** A page of the current tenant's members. Keeps the previous page visible
+ *  while the next one loads, for flicker-free paging. */
+export function useMembers(params: ListMembersParams) {
+  return useQuery({
+    queryKey: [...MEMBERS_KEY, params],
+    queryFn: () => membersApi.list(params),
+    placeholderData: keepPreviousData,
+  })
 }
 
 export function useAssignMember() {
