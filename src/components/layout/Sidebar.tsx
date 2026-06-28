@@ -33,8 +33,11 @@ const NAV: NavItem[] = [
 ]
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { isSuperAdmin, role } = useAuth()
-  const isClientAdmin = role === 'client_admin'
+  const { isSuperAdmin, role, currentClientId } = useAuth()
+  // Client-admin areas are per-organisation, so they need a selected tenant.
+  // A super-admin carries client_admin authority but is unscoped until they
+  // pick an organisation — hide those links until then.
+  const isClientAdmin = role === 'client_admin' && currentClientId != null
   const items = NAV.filter(
     (i) =>
       (!i.superAdmin || isSuperAdmin) && (!i.clientAdmin || isClientAdmin),
