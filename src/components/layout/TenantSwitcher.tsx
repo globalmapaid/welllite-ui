@@ -27,7 +27,7 @@ export function TenantSwitcher() {
     setSwitching(true)
     try {
       await switchTenant(clientId)
-      toast.success('Switched organisation.')
+      toast.success('Switched project.')
     } catch (err) {
       toast.error(messageForError(err))
     } finally {
@@ -43,12 +43,12 @@ export function TenantSwitcher() {
       >
         <Building2 className="size-4 text-muted-foreground" />
         <span className="max-w-[12rem] truncate">
-          {current?.name ?? 'Select organisation'}
+          {current?.name ?? 'Select project'}
         </span>
         <ChevronsUpDown className="size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel>Scope into organisation</DropdownMenuLabel>
+        <DropdownMenuLabel>Switch to project</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {tenants.isLoading && (
           <div className="px-2 py-1.5 text-sm text-muted-foreground">Loading…</div>
@@ -73,7 +73,7 @@ export function TenantSwitcher() {
         ))}
         {tenants.data?.length === 0 && (
           <div className="px-2 py-1.5 text-sm text-muted-foreground">
-            No organisations yet.
+            No projects yet.
           </div>
         )}
       </DropdownMenuContent>

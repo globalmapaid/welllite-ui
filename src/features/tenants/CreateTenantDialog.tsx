@@ -52,14 +52,14 @@ export function CreateTenantDialog() {
       <DialogTrigger asChild>
         <Button>
           <Plus className="size-4" />
-          New organisation
+          New project
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>New organisation</DialogTitle>
+          <DialogTitle>New project</DialogTitle>
           <DialogDescription>
-            Create a tenant. Members are added separately via their memberships.
+            Create a project. Members are added separately via their memberships.
           </DialogDescription>
         </DialogHeader>
         <form

@@ -46,8 +46,8 @@ export function SelectOrganisationPage() {
 
   return (
     <AuthLayout
-      title="Choose an organisation"
-      subtitle="Your account belongs to more than one organisation"
+      title="Choose a project"
+      subtitle="Your account belongs to more than one project"
       footer={
         <button
           type="button"
@@ -107,7 +107,7 @@ export function SelectOrganisationPage() {
 
         {membershipsQuery.data?.length === 0 && (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No active organisations found for your account.
+            No active projects found for your account.
           </p>
         )}
       </div>

@@ -17,14 +17,14 @@ export function DashboardPage() {
     <div>
       <PageHeader
         title={`Welcome, ${user?.first_name ?? ''}`.trim()}
-        description="Manage WellLite accounts and organisations from here."
+        description="Manage WellLite accounts and projects from here."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Current organisation
+              Current project
             </CardTitle>
             <Building2 className="size-4 text-muted-foreground" />
           </CardHeader>
@@ -40,7 +40,7 @@ export function DashboardPage() {
             )}
             {isSuperAdmin && !currentClientId && (
               <p className="mt-2 text-xs text-muted-foreground">
-                Use the organisation switcher to scope into a tenant.
+                Use the project switcher above to select one.
               </p>
             )}
           </CardContent>
@@ -73,7 +73,7 @@ export function DashboardPage() {
           <Card>
             <CardHeader className="flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                Organisations
+                Projects
               </CardTitle>
               <Database className="size-4 text-muted-foreground" />
             </CardHeader>
@@ -85,7 +85,7 @@ export function DashboardPage() {
                 to="/organisations"
                 className="mt-2 inline-block text-sm text-primary hover:underline"
               >
-                Manage organisations →
+                Manage projects →
               </Link>
             </CardContent>
           </Card>

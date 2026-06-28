@@ -24,7 +24,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/organisations', label: 'Organisations', icon: Database, superAdmin: true },
+  { to: '/organisations', label: 'Projects', icon: Database, superAdmin: true },
   { to: '/users', label: 'Users', icon: UsersRound, superAdmin: true },
   { to: '/members', label: 'Team', icon: Users, clientAdmin: true },
   { to: '/wells', label: 'Wells', icon: Gauge, soon: true },
@@ -34,9 +34,9 @@ const NAV: NavItem[] = [
 
 export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { isSuperAdmin, role, currentClientId } = useAuth()
-  // Client-admin areas are per-organisation, so they need a selected tenant.
+  // Client-admin areas are per-project, so they need a selected project.
   // A super-admin carries client_admin authority but is unscoped until they
-  // pick an organisation — hide those links until then.
+  // pick a project — hide those links until then.
   const isClientAdmin = role === 'client_admin' && currentClientId != null
   const items = NAV.filter(
     (i) =>

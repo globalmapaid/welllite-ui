@@ -42,7 +42,7 @@ export function RemoveMemberDialog({
             {member && (
               <>
                 {member.first_name} {member.last_name} ({member.email}) will lose
-                access to this organisation and be signed out immediately. You can
+                access to this project and be signed out immediately. You can
                 re-add them later by email.
               </>
             )}

@@ -79,7 +79,7 @@ export function MembersPage() {
     <div>
       <PageHeader
         title="Team members"
-        description="Manage who belongs to this organisation."
+        description="Manage who belongs to this project."
         actions={<AddMemberDialog />}
       />
 
