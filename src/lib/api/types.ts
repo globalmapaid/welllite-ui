@@ -90,6 +90,37 @@ export interface PaginatedMembers {
   offset: number
 }
 
+/** One of a user's tenant memberships, as returned in the platform directory. */
+export interface UserMembershipSummary {
+  membership_id: string
+  client_id: string
+  client_name: string
+  role: Role
+  is_active: boolean
+}
+
+/** A platform user (super-admin cross-tenant directory) with all memberships. */
+export interface PlatformUser {
+  id: string
+  email: string
+  first_name: string
+  last_name: string
+  is_active: boolean
+  is_super_admin: boolean
+  email_verified_at: string | null
+  created_at: string
+  updated_at: string
+  memberships: UserMembershipSummary[]
+}
+
+/** Paginated list envelope returned by GET /users. */
+export interface PaginatedUsers {
+  items: PlatformUser[]
+  total: number
+  limit: number
+  offset: number
+}
+
 // ---- Request payloads ----
 
 export interface RegisterRequest {
