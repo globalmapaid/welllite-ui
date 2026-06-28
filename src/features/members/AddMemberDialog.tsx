@@ -17,10 +17,20 @@ import {
 import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { NativeSelect } from '@/components/ui/native-select'
+import { ApiError } from '@/lib/api/http'
 import type { Role } from '@/lib/api/types'
+import { messageForError } from '@/lib/errorCodes'
 import { applyApiError } from '@/lib/formErrors'
 import { ROLE_LABELS, ROLES } from '@/lib/roles'
 import { useAssignMember } from './queries'
+
+/** Assignment failures that are about the entered email — shown inline on the field. */
+const EMAIL_ERROR_CODES = new Set([
+  'AUTH_USER_NOT_FOUND',
+  'CLIENT_MEMBER_ALREADY_EXISTS',
+  'CLIENT_MEMBER_USER_INACTIVE',
+  'CLIENT_MEMBER_USER_NOT_VERIFIED',
+])
 
 const schema = z.object({
   email: z.string().email('Enter a valid email address.'),
@@ -40,16 +50,29 @@ export function AddMemberDialog() {
     assign.mutate(
       { email: values.email, role: values.role as Role },
       {
-        onSuccess: () => {
-          // Anti-enumeration: a 202 doesn't confirm a real account, so keep the
-          // copy neutral. The invalidated list refetch shows the real result.
-          toast.success("If that account exists, they've been added to your team.")
+        onSuccess: (member) => {
+          // The endpoint now returns the created/reactivated member, so confirm
+          // exactly who was added and with which role.
+          toast.success(
+            `Added ${member.first_name} ${member.last_name} (${member.email}) as ${ROLE_LABELS[member.role]}.`,
+          )
           form.reset()
           setOpen(false)
         },
         onError: (err) => {
-          const top = applyApiError(err, form.setError, ['email'])
-          if (top) toast.error(top)
+          // Malformed input → inline field errors.
+          if (err instanceof ApiError && err.errors.length > 0) {
+            const top = applyApiError(err, form.setError, ['email'])
+            if (top) toast.error(top)
+            return
+          }
+          // Explicit assignment failures are about the email — show inline and
+          // keep the dialog open so the admin can correct it and retry.
+          if (err instanceof ApiError && EMAIL_ERROR_CODES.has(err.code)) {
+            form.setError('email', { type: 'server', message: messageForError(err) })
+            return
+          }
+          toast.error(messageForError(err))
         },
       },
     )

@@ -1,5 +1,5 @@
 import { request } from './http'
-import type { Member, MessageEnvelope, Role } from './types'
+import type { Member, Role } from './types'
 
 export interface AssignMemberPayload {
   email: string
@@ -20,12 +20,12 @@ export const membersApi = {
   list: () => request<Member[]>('/clients/members', { auth: 'access' }),
 
   /**
-   * Assign a member by email. Deliberately non-revealing: returns 202 with a
-   * generic envelope whether or not the email maps to a real account. Re-fetch
-   * the list afterwards to see the real result.
+   * Assign a member by email. Returns 201 with the created (or reactivated)
+   * member on success, or an explicit error explaining why it couldn't proceed
+   * (e.g. unknown email, already a member, account disabled/unverified).
    */
   assign: (payload: AssignMemberPayload) =>
-    request<MessageEnvelope>('/clients/members', {
+    request<Member>('/clients/members', {
       method: 'POST',
       body: payload,
       auth: 'access',
