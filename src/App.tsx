@@ -27,7 +27,7 @@ function App() {
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/select-organisation" element={<SelectOrganisationPage />} />
+      <Route path="/select-project" element={<SelectOrganisationPage />} />
 
       {/* Authenticated app */}
       <Route element={<ProtectedRoute />}>
@@ -40,7 +40,7 @@ function App() {
             <Route path="/members" element={<MembersPage />} />
           </Route>
           <Route element={<RequireSuperAdmin />}>
-            <Route path="/organisations" element={<OrganisationsPage />} />
+            <Route path="/projects" element={<OrganisationsPage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>
         </Route>

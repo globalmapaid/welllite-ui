@@ -41,7 +41,7 @@ export function LoginPage() {
         device_hint: navigator.userAgent.slice(0, 60),
       })
       await applyLoginResponse(res)
-      navigate(isPreAuth(res) ? '/select-organisation' : '/', { replace: true })
+      navigate(isPreAuth(res) ? '/select-project' : '/', { replace: true })
     } catch (err) {
       if (err instanceof ApiError && err.code === 'AUTH_EMAIL_NOT_VERIFIED') {
         setUnverifiedEmail(values.email)

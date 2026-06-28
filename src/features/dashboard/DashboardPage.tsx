@@ -82,7 +82,7 @@ export function DashboardPage() {
                 {tenants.data?.length ?? '—'}
               </div>
               <Link
-                to="/organisations"
+                to="/projects"
                 className="mt-2 inline-block text-sm text-primary hover:underline"
               >
                 Manage projects →

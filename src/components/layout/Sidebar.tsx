@@ -24,7 +24,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/organisations', label: 'Projects', icon: Database, superAdmin: true },
+  { to: '/projects', label: 'Projects', icon: Database, superAdmin: true },
   { to: '/users', label: 'Users', icon: UsersRound, superAdmin: true },
   { to: '/members', label: 'Team', icon: Users, clientAdmin: true },
   { to: '/wells', label: 'Wells', icon: Gauge, soon: true },
