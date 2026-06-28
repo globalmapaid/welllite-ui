@@ -83,7 +83,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Register to manage WellLite data and organisations"
+      subtitle="Register to manage WellLite data and projects"
       footer={
         <>
           Already have an account?{' '}

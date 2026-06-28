@@ -63,9 +63,9 @@ export function EditTenantDialog({
     <Dialog open={!!tenant} onOpenChange={(o) => !o && onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit organisation</DialogTitle>
+          <DialogTitle>Edit project</DialogTitle>
           <DialogDescription>
-            Update the organisation name or active status.
+            Update the project name or active status.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -81,7 +81,7 @@ export function EditTenantDialog({
             <div>
               <Label htmlFor="edit-active">Active</Label>
               <p className="text-xs text-muted-foreground">
-                Inactive organisations block their members from signing in.
+                Inactive projects block their members from signing in.
               </p>
             </div>
             <Controller

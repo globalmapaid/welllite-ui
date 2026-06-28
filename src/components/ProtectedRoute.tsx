@@ -7,7 +7,7 @@ export function ProtectedRoute() {
   const { status } = useAuth()
 
   if (status === 'loading') return <FullPageLoader />
-  if (status === 'preauth') return <Navigate to="/select-organisation" replace />
+  if (status === 'preauth') return <Navigate to="/select-project" replace />
   if (status !== 'authenticated') return <Navigate to="/login" replace />
 
   return <Outlet />

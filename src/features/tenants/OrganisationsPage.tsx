@@ -28,8 +28,8 @@ export function OrganisationsPage() {
   return (
     <div>
       <PageHeader
-        title="Organisations"
-        description="Tenants on the WellLite platform."
+        title="Projects"
+        description="Projects on the WellLite platform."
         actions={<CreateTenantDialog />}
       />
 
@@ -82,7 +82,7 @@ export function OrganisationsPage() {
             {tenants.data?.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
-                  No organisations yet. Create the first one.
+                  No projects yet. Create the first one.
                 </TableCell>
               </TableRow>
             )}

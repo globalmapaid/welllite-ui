@@ -12,7 +12,7 @@ export const CODE_MESSAGES: Record<string, string> = {
   AUTH_EMAIL_NOT_VERIFIED:
     'Your email is not verified yet. Check your inbox for the verification code.',
   AUTH_NO_ACTIVE_MEMBERSHIP:
-    'Your account has no active organisation membership. Contact your administrator.',
+    'Your account has no active project membership. Contact your administrator.',
   AUTH_EMAIL_ALREADY_REGISTERED: 'An account with this email already exists.',
   AUTH_VERIFICATION_CODE_INVALID:
     'That verification code is incorrect or has expired. Request a new one.',
@@ -21,24 +21,24 @@ export const CODE_MESSAGES: Record<string, string> = {
   AUTH_USER_NOT_FOUND: 'No account was found for that email.',
   AUTH_REFRESH_TOKEN_INVALID: 'Your session has expired. Please sign in again.',
   AUTH_MEMBERSHIP_INACTIVE:
-    'Your membership in this organisation is no longer active.',
-  AUTH_MEMBERSHIP_NOT_FOUND: 'That organisation membership is unavailable.',
+    'Your membership in this project is no longer active.',
+  AUTH_MEMBERSHIP_NOT_FOUND: 'That project membership is unavailable.',
   AUTH_INVALID_TOKEN: 'Your session has expired. Please sign in again.',
-  AUTH_NO_TENANT_SELECTED: 'Select an organisation to continue.',
+  AUTH_NO_TENANT_SELECTED: 'Select a project to continue.',
   AUTH_SUPER_ADMIN_REQUIRED: 'You do not have permission to do that.',
 
   // Clients
-  CLIENT_NOT_FOUND: 'That organisation could not be found.',
+  CLIENT_NOT_FOUND: 'That project could not be found.',
 
-  // Tenant member management
+  // Project member management
   AUTH_CLIENT_ADMIN_REQUIRED:
-    'Only organisation admins can manage team members.',
-  CLIENT_MEMBER_NOT_FOUND: 'That person is not a member of this organisation.',
+    'Only project admins can manage team members.',
+  CLIENT_MEMBER_NOT_FOUND: 'That person is not a member of this project.',
   CLIENT_CANNOT_MODIFY_SELF: 'You cannot change or remove your own membership.',
   CLIENT_LAST_ADMIN:
-    'This is the only organisation admin. Promote another admin before removing or demoting them.',
+    'This is the only project admin. Promote another admin before removing or demoting them.',
   CLIENT_MEMBER_ALREADY_EXISTS:
-    'That person is already an active member of this organisation.',
+    'That person is already an active member of this project.',
   CLIENT_MEMBER_USER_INACTIVE:
     'That account is disabled, so they can’t be added.',
   CLIENT_MEMBER_USER_NOT_VERIFIED:

@@ -91,7 +91,7 @@ export function AddMemberDialog() {
           <DialogTitle>Add a team member</DialogTitle>
           <DialogDescription>
             Enter the email of an existing WellLite account to add them to this
-            organisation.
+            project.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>

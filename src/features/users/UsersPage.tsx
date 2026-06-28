@@ -29,7 +29,7 @@ const PAGE_SIZE = 20
 
 function MembershipsCell({ user }: { user: PlatformUser }) {
   if (user.memberships.length === 0) {
-    return <span className="text-xs text-muted-foreground">No organisations</span>
+    return <span className="text-xs text-muted-foreground">No projects</span>
   }
   return (
     <div className="flex flex-wrap gap-1.5">
@@ -87,7 +87,7 @@ export function UsersPage() {
     <div>
       <PageHeader
         title="Users"
-        description="Search every user across all organisations."
+        description="Search every user across all projects."
       />
 
       {notAvailable ? (
@@ -145,7 +145,7 @@ export function UsersPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Organisations</TableHead>
+                  <TableHead>Projects</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
