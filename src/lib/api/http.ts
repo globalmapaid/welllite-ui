@@ -39,7 +39,10 @@ export function setOnAuthLost(handler: () => void) {
   onAuthLost = handler
 }
 
-type AuthMode = 'access' | 'preauth' | 'none'
+// 'session' prefers the pre-auth token (login handshake) and falls back to the
+// access token — used by endpoints the backend accepts either on (memberships,
+// select-client), so the same call works during login and for in-session switches.
+type AuthMode = 'access' | 'preauth' | 'session' | 'none'
 
 export interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
@@ -52,7 +55,10 @@ export interface RequestOptions {
 
 function authHeader(mode: AuthMode): Record<string, string> {
   if (mode === 'none') return {}
-  const token = mode === 'preauth' ? getPreAuthToken() : getAccessToken()
+  let token: string | null
+  if (mode === 'preauth') token = getPreAuthToken()
+  else if (mode === 'session') token = getPreAuthToken() ?? getAccessToken()
+  else token = getAccessToken()
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
@@ -129,10 +135,11 @@ export async function request<T>(
 
   let res = await doFetch()
 
-  // Access token expired → refresh once and retry.
+  // Access token expired → refresh once and retry. (During the login pre-auth
+  // handshake there is no refresh token yet, so this simply doesn't fire.)
   if (
     res.status === 401 &&
-    auth === 'access' &&
+    (auth === 'access' || auth === 'session') &&
     !skipRefresh &&
     getRefreshToken()
   ) {
@@ -147,7 +154,7 @@ export async function request<T>(
 
   const parsed = await parseBody(res)
   if (!res.ok) {
-    if (res.status === 401 && auth === 'access') {
+    if (res.status === 401 && (auth === 'access' || auth === 'session')) {
       clearSession()
       onAuthLost?.()
     }

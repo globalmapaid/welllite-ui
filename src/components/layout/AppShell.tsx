@@ -1,18 +1,14 @@
 import { Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Badge } from '@/components/ui/badge'
-import { useCurrentTenant } from '@/features/tenants/queries'
-import { ROLE_LABELS } from '@/lib/roles'
-import { cn } from '@/lib/utils'
 import { useAuth } from '@/providers/auth-context'
+import { MembershipSwitcher } from './MembershipSwitcher'
 import { Sidebar } from './Sidebar'
 import { TenantSwitcher } from './TenantSwitcher'
 import { UserMenu } from './UserMenu'
 
 export function AppShell() {
-  const { isSuperAdmin, role } = useAuth()
-  const tenant = useCurrentTenant()
+  const { isSuperAdmin } = useAuth()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
@@ -47,21 +43,7 @@ export function AppShell() {
           </button>
 
           <div className="flex flex-1 items-center gap-3">
-            {isSuperAdmin ? (
-              <TenantSwitcher />
-            ) : (
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    'text-sm font-medium',
-                    !tenant.data && 'text-muted-foreground',
-                  )}
-                >
-                  {tenant.data?.name ?? 'WellLite'}
-                </span>
-                {role && <Badge variant="muted">{ROLE_LABELS[role]}</Badge>}
-              </div>
-            )}
+            {isSuperAdmin ? <TenantSwitcher /> : <MembershipSwitcher />}
           </div>
 
           <UserMenu />
