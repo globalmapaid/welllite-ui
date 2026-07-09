@@ -40,15 +40,16 @@ export const authApi = {
       auth: 'none',
     }),
 
-  /** Pre-auth or access token both accepted by the backend. */
+  /** Accepts either the pre-auth token (login) or an access token (in-session). */
   memberships: () =>
-    request<Membership[]>('/auth/memberships', { auth: 'preauth' }),
+    request<Membership[]>('/auth/memberships', { auth: 'session' }),
 
+  /** Accepts pre-auth (login handshake) or access token (in-session switch). */
   selectClient: (membership_id: string, device_hint?: string) =>
     request<TokenPair>('/auth/select-client', {
       method: 'POST',
       body: { membership_id, device_hint },
-      auth: 'preauth',
+      auth: 'session',
     }),
 
   switchClient: (client_id: string, device_hint?: string) =>

@@ -84,11 +84,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const selectMembership = useCallback(
     async (membershipId: string, deviceHint?: string) => {
+      // Present only for an in-session switch; null during the login handshake.
+      const previousRefresh = getRefreshToken()
       const pair = await authApi.selectClient(membershipId, deviceHint)
       setTokenPair(pair)
       await loadUser()
+      // Refresh per-tenant data for the newly selected client.
+      await queryClient.invalidateQueries()
+      // Revoke the previous tenant's session when switching in-session.
+      if (previousRefresh && previousRefresh !== pair.refresh_token) {
+        try {
+          await authApi.logout(previousRefresh)
+        } catch {
+          // best effort — the new session is already active
+        }
+      }
     },
-    [loadUser],
+    [loadUser, queryClient],
   )
 
   const switchTenant = useCallback(
