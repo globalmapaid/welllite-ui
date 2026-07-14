@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { ClientTenant } from '@/lib/api/types'
+import { countryLabel } from '@/lib/countries'
 import { messageForError } from '@/lib/errorCodes'
 import { formatDateTime } from '@/lib/utils'
 import { useTenantList } from './queries'
@@ -45,6 +46,7 @@ export function OrganisationsPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Countries</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -53,7 +55,7 @@ export function OrganisationsPage() {
             {tenants.isLoading &&
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={4}>
+                  <TableCell colSpan={5}>
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                 </TableRow>
@@ -66,6 +68,19 @@ export function OrganisationsPage() {
                   <Badge variant={t.is_active ? 'success' : 'muted'}>
                     {t.is_active ? 'Active' : 'Inactive'}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  {t.countries && t.countries.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {t.countries.map((c) => (
+                        <Badge key={c} variant="secondary">
+                          {countryLabel(c)}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">None set</span>
+                  )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {formatDateTime(t.created_at)}
@@ -81,7 +96,7 @@ export function OrganisationsPage() {
 
             {tenants.data?.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
                   No projects yet. Create the first one.
                 </TableCell>
               </TableRow>

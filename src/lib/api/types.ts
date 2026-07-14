@@ -64,6 +64,9 @@ export interface ClientTenant {
   id: string
   name: string
   is_active: boolean
+  /** ISO 3166-1 alpha-2 codes the tenant operates in; well coordinates are
+   *  validated against these server-side. May be absent on older payloads. */
+  countries?: string[]
   created_at: string
   updated_at: string
 }
@@ -116,6 +119,68 @@ export interface PlatformUser {
 /** Paginated list envelope returned by GET /users. */
 export interface PaginatedUsers {
   items: PlatformUser[]
+  total: number
+  limit: number
+  offset: number
+}
+
+// ---- Wells & readings (field data) ----
+
+export type WellType = 'borehole' | 'hand_dug' | 'spring' | 'oasis'
+export type WellStatus = 'working' | 'broken'
+export type ReviewStatus = 'pending' | 'approved' | 'discarded'
+
+/** A well survey (`WellResponse`). Decimals arrive as fixed-precision strings. */
+export interface Well {
+  id: string
+  client_id: string
+  /** Device-generated idempotency key, unique per tenant. */
+  client_uuid: string
+  created_by: string
+  latitude: number
+  longitude: number
+  well_confirmed: boolean
+  name: string | null
+  well_type: WellType | null
+  well_status: WellStatus | null
+  daily_users_estimate: number | null
+  distance_to_other_water_km: string | null
+  opening_diameter_cm: string | null
+  owner_name: string | null
+  owner_mobile: string | null
+  comments: string | null
+  review_status: ReviewStatus
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_note: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** A Static Water Level reading (`ReadingResponse`). */
+export interface Reading {
+  id: string
+  client_id: string
+  well_id: string
+  client_uuid: string
+  created_by: string
+  swl_metres: string
+  measured_on: string
+  created_at: string
+  updated_at: string
+}
+
+/** Paginated list envelope returned by GET /wells. */
+export interface PaginatedWells {
+  items: Well[]
+  total: number
+  limit: number
+  offset: number
+}
+
+/** Paginated list envelope returned by GET /readings. */
+export interface PaginatedReadings {
+  items: Reading[]
   total: number
   limit: number
   offset: number

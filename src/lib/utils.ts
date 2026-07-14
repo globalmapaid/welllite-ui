@@ -19,3 +19,16 @@ export function formatDateTime(iso?: string | null): string {
     minute: '2-digit',
   })
 }
+
+/** Format a date-only value (`YYYY-MM-DD`) for display; '—' for empty. */
+export function formatDate(value?: string | null): string {
+  if (!value) return '—'
+  // Parse as a plain calendar date (avoid TZ shifting a bare YYYY-MM-DD).
+  const [y, m, d] = value.split('-').map(Number)
+  if (!y || !m || !d) return value
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}

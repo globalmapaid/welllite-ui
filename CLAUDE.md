@@ -5,19 +5,22 @@ Web admin console for the `welllite-api` backend (sibling repo at
 
 ## What this app covers
 
-Only what the backend implements **today**: the `auth` and `clients` routers.
-Wells / readings / sync are documented in the API's README but **not yet
-implemented** (no routers/schemas/models) — they exist here as `ComingSoon`
-placeholder pages under `src/features/placeholders/`. The real field-capture
-client is the separate React Native app, not this one.
+The backend's `auth`, `clients`, `wells`, and `readings` routers. Wells and
+readings are **read-only monitoring views** here — the field capture (and
+offline `sync/batch`) lives in the separate React Native app, and the backend's
+review-moderation endpoints aren't built yet, so `review_status` is display-only.
 
-When the backend ships wells/readings:
+- Wells: list (`src/features/wells/WellsPage.tsx`, review-status filter +
+  pagination) and detail (`WellDetailPage.tsx`, survey fields + that well's
+  readings). API in `src/lib/api/wells.ts`, hooks in `features/wells/queries.ts`.
+- Readings: list (`src/features/readings/`), API in `src/lib/api/readings.ts`.
+- Enum labels/badge tones live in `src/lib/wells.ts`.
+- Both areas are tenant-scoped; the queries are disabled until `currentClientId`
+  is set and the page shows `<NeedsProject />` for an unscoped super-admin.
 
-- Add types to `src/lib/api/types.ts` and an endpoint module under
-  `src/lib/api/` (mirror `clients.ts`).
-- Replace the relevant `ComingSoon` page body with TanStack Query data.
-- The nav entries already exist in `src/components/layout/Sidebar.tsx` (drop the
-  `soon` flag).
+`sync/batch` is intentionally **not** implemented in this console (offline sync
+is a mobile concern). If the backend later ships photo upload or approve/discard
+moderation, add them as new endpoint modules mirroring the above.
 
 ## Architecture conventions
 
@@ -54,6 +57,13 @@ When the backend ships wells/readings:
   `AUTH_NO_TENANT_SELECTED` while unscoped, so `useCurrentTenant` is disabled
   until `currentClientId` is set.
 - The backend derives `client_id` from the JWT and never trusts a body value.
+- Each tenant has a list of operating **countries** (ISO alpha-2) that well
+  coordinates are validated against. Super-admins manage it in the Projects
+  **Edit** dialog (`PUT /clients/{id}/countries`, a separate call from the
+  name/active `PATCH`); it comes back on `GET /clients` and `/clients/me` as
+  `countries: [...]`. There's no endpoint listing *supported* codes yet, so
+  `src/lib/countries.ts` is a display-only label/suggestion list and the server
+  is authoritative (`CLIENT_UNSUPPORTED_COUNTRY`, `params.countries` = bad codes).
 
 ## Commands
 

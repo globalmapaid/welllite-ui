@@ -101,8 +101,15 @@ export function DashboardPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           Wells and Static Water Level readings are captured in the WellLite mobile
-          app and will appear here once the backend exposes those endpoints. The
-          sections are stubbed in the navigation, ready to wire up.
+          app. Browse this project's{' '}
+          <Link to="/wells" className="text-primary hover:underline">
+            wells
+          </Link>{' '}
+          and{' '}
+          <Link to="/readings" className="text-primary hover:underline">
+            readings
+          </Link>
+          , including each well's validated coordinates and review status.
         </CardContent>
       </Card>
     </div>
