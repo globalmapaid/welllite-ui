@@ -11,8 +11,9 @@ import { SelectOrganisationPage } from '@/features/auth/SelectOrganisationPage'
 import { VerifyEmailPage } from '@/features/auth/VerifyEmailPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { NotFoundPage } from '@/features/NotFoundPage'
-import { ReadingsPage } from '@/features/placeholders/ReadingsPage'
-import { WellsPage } from '@/features/placeholders/WellsPage'
+import { ReadingsPage } from '@/features/readings/ReadingsPage'
+import { WellsPage } from '@/features/wells/WellsPage'
+import { WellDetailPage } from '@/features/wells/WellDetailPage'
 import { MembersPage } from '@/features/members/MembersPage'
 import { ProfilePage } from '@/features/profile/ProfilePage'
 import { OrganisationsPage } from '@/features/tenants/OrganisationsPage'
@@ -35,6 +36,7 @@ function App() {
           <Route index element={<DashboardPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/wells" element={<WellsPage />} />
+          <Route path="/wells/:id" element={<WellDetailPage />} />
           <Route path="/readings" element={<ReadingsPage />} />
           <Route element={<RequireClientAdmin />}>
             <Route path="/members" element={<MembersPage />} />

@@ -1,5 +1,6 @@
 import {
   Database,
+  Droplets,
   Gauge,
   LayoutDashboard,
   UserCircle,
@@ -17,7 +18,6 @@ interface NavItem {
   label: string
   icon: LucideIcon
   end?: boolean
-  soon?: boolean
   superAdmin?: boolean
   clientAdmin?: boolean
 }
@@ -27,8 +27,8 @@ const NAV: NavItem[] = [
   { to: '/projects', label: 'Projects', icon: Database, superAdmin: true },
   { to: '/users', label: 'Users', icon: UsersRound, superAdmin: true },
   { to: '/members', label: 'Team', icon: Users, clientAdmin: true },
-  { to: '/wells', label: 'Wells', icon: Gauge, soon: true },
-  { to: '/readings', label: 'Readings', icon: Gauge, soon: true },
+  { to: '/wells', label: 'Wells', icon: Gauge },
+  { to: '/readings', label: 'Readings', icon: Droplets },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ]
 
@@ -66,11 +66,6 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           >
             <item.icon className="size-4 shrink-0" />
             <span className="flex-1">{item.label}</span>
-            {item.soon && (
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                Soon
-              </span>
-            )}
           </NavLink>
         ))}
       </nav>

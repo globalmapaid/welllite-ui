@@ -29,6 +29,8 @@ export const CODE_MESSAGES: Record<string, string> = {
 
   // Clients
   CLIENT_NOT_FOUND: 'That project could not be found.',
+  CLIENT_UNSUPPORTED_COUNTRY:
+    'One or more country codes aren’t supported for coordinate validation.',
 
   // Project member management
   AUTH_CLIENT_ADMIN_REQUIRED:
@@ -43,6 +45,21 @@ export const CODE_MESSAGES: Record<string, string> = {
     'That account is disabled, so they can’t be added.',
   CLIENT_MEMBER_USER_NOT_VERIFIED:
     'That person hasn’t verified their email yet, so they can’t be added.',
+
+  // Wells & readings (field data)
+  WELL_NOT_FOUND: 'That well could not be found in this project.',
+  WELL_ALREADY_EXISTS: 'A well with this identifier already exists.',
+  WELL_COORDINATE_LIKELY_TRANSPOSED:
+    'The coordinates look swapped (latitude and longitude reversed).',
+  WELL_COORDINATE_OUT_OF_RANGE:
+    'The coordinates are not valid WGS84 latitude/longitude values.',
+  WELL_COORDINATE_OUTSIDE_COUNTRY:
+    'The coordinates fall outside the project’s configured countries.',
+  CLIENT_NO_COUNTRIES:
+    'This project has no countries configured yet. Ask a super-admin to set them before capturing wells.',
+  READING_NOT_FOUND: 'That reading could not be found in this project.',
+  READING_ALREADY_EXISTS: 'A reading with this identifier already exists.',
+  SYNC_CONFLICT: 'Another sync is in progress. Please try again.',
 
   // Validation (root + common field codes)
   VALIDATION_FAILED: 'Please correct the highlighted fields.',

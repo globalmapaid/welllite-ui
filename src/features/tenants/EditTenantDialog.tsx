@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -17,15 +17,25 @@ import { Field } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { clientsApi, type UpdateTenantPayload } from '@/lib/api/clients'
+import { ApiError } from '@/lib/api/http'
+import { clientsApi } from '@/lib/api/clients'
 import type { ClientTenant } from '@/lib/api/types'
+import { messageForError } from '@/lib/errorCodes'
 import { applyApiError } from '@/lib/formErrors'
+import { CountryEditor } from './CountryEditor'
 
 const schema = z.object({
   name: z.string().min(1, 'Required.').max(255),
   is_active: z.boolean(),
 })
 type Values = z.infer<typeof schema>
+
+/** Order-insensitive equality for two code lists. */
+function sameCodes(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false
+  const set = new Set(a)
+  return b.every((c) => set.has(c))
+}
 
 export function EditTenantDialog({
   tenant,
@@ -35,25 +45,55 @@ export function EditTenantDialog({
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
+  const [countries, setCountries] = useState<string[]>([])
+  const [invalidCodes, setInvalidCodes] = useState<string[]>([])
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', is_active: true },
   })
 
   useEffect(() => {
-    if (tenant) form.reset({ name: tenant.name, is_active: tenant.is_active })
+    if (tenant) {
+      form.reset({ name: tenant.name, is_active: tenant.is_active })
+      setCountries(tenant.countries ?? [])
+      setInvalidCodes([])
+    }
   }, [tenant, form])
 
   const mutation = useMutation({
-    mutationFn: (payload: UpdateTenantPayload) =>
-      clientsApi.update(tenant!.id, payload),
+    mutationFn: async (values: Values) => {
+      let updated: ClientTenant | null = null
+      const detailsChanged =
+        values.name !== tenant!.name || values.is_active !== tenant!.is_active
+      if (detailsChanged) {
+        updated = await clientsApi.update(tenant!.id, values)
+      }
+      if (!sameCodes(countries, tenant!.countries ?? [])) {
+        // Country list is its own endpoint; run after the PATCH so a rejected
+        // code doesn't undo a valid name/status change.
+        updated = await clientsApi.setCountries(tenant!.id, countries)
+      }
+      return updated
+    },
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ['tenants'] })
       queryClient.invalidateQueries({ queryKey: ['tenant', 'me'] })
-      toast.success(`Saved “${updated.name}”.`)
+      toast.success(`Saved “${updated?.name ?? tenant?.name}”.`)
       onClose()
     },
     onError: (err) => {
+      if (err instanceof ApiError && err.code === 'CLIENT_UNSUPPORTED_COUNTRY') {
+        const bad = (err.params?.countries as string[] | undefined) ?? []
+        setInvalidCodes(bad)
+        toast.error(
+          bad.length
+            ? `Not supported: ${bad.join(', ')}. Remove or correct these countries.`
+            : messageForError(err),
+        )
+        // Refresh cache so any name/status change that already landed is visible.
+        queryClient.invalidateQueries({ queryKey: ['tenants'] })
+        return
+      }
       const top = applyApiError(err, form.setError, ['name'])
       if (top) toast.error(top)
     },
@@ -65,7 +105,7 @@ export function EditTenantDialog({
         <DialogHeader>
           <DialogTitle>Edit project</DialogTitle>
           <DialogDescription>
-            Update the project name or active status.
+            Update the project name, active status, or operating countries.
           </DialogDescription>
         </DialogHeader>
         <form
@@ -96,6 +136,23 @@ export function EditTenantDialog({
               )}
             />
           </div>
+
+          <Field
+            label="Operating countries"
+            htmlFor="add-country"
+            hint="Well coordinates are validated against these. A project with no countries can’t accept wells."
+          >
+            <CountryEditor
+              id="add-country"
+              value={countries}
+              onChange={(next) => {
+                setCountries(next)
+                setInvalidCodes([])
+              }}
+              invalidCodes={invalidCodes}
+              disabled={mutation.isPending}
+            />
+          </Field>
 
           <DialogFooter>
             <Button
