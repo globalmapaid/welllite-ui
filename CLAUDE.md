@@ -10,9 +10,11 @@ readings are **read-only monitoring views** here — the field capture (and
 offline `sync/batch`) lives in the separate React Native app, and the backend's
 review-moderation endpoints aren't built yet, so `review_status` is display-only.
 
-- Wells: list (`src/features/wells/WellsPage.tsx`, review-status filter +
-  pagination) and detail (`WellDetailPage.tsx`, survey fields + that well's
-  readings). API in `src/lib/api/wells.ts`, hooks in `features/wells/queries.ts`.
+- Wells: `WellsPage.tsx` owns the shared review-status filter and a List/Map
+  toggle — `WellsList` (paginated table, in the same file) and `WellsMap.tsx`
+  (bounding-box map). Detail is `WellDetailPage.tsx` (survey fields + that
+  well's readings). API in `src/lib/api/wells.ts`, hooks in
+  `features/wells/queries.ts`.
 - Readings: list (`src/features/readings/`), API in `src/lib/api/readings.ts`.
 - Enum labels/badge tones live in `src/lib/wells.ts`.
 - Both areas are tenant-scoped; the queries are disabled until `currentClientId`
@@ -21,6 +23,33 @@ review-moderation endpoints aren't built yet, so `review_status` is display-only
 `sync/batch` is intentionally **not** implemented in this console (offline sync
 is a mobile concern). If the backend later ships photo upload or approve/discard
 moderation, add them as new endpoint modules mirroring the above.
+
+## Wells map view
+
+`GET /wells/search` takes a WGS84 bounding box (`min_lat/min_lon/max_lat/max_lon`,
+each `min_*` **strictly** below its `max_*`) plus optional `review_status` and
+`limit` (1–2000, default 500), and returns compact `WellMarker`s — *not* full
+well records, so a marker click links to `/wells/{id}` for detail.
+
+- Leaflet drives the map directly (no react-leaflet), with `preferCanvas` so
+  thousands of `circleMarker`s stay smooth. Markers are diffed by id between
+  fetches rather than cleared and re-added, so pins don't blink while panning.
+- **Never pass `map.getBounds()` straight to the API.** Leaflet reports lat/lon
+  outside WGS84 range when zoomed out or panned across world copies, which the
+  API rejects (422, or 400 `WELL_INVALID_BOUNDS`). `boundsFromViewport()` in
+  `src/lib/map.ts` clamps, wraps, snaps to a ~100 m grid (stable query keys) and
+  guarantees strict `min < max`; a viewport straddling the antimeridian widens
+  to the full longitude range rather than splitting into two queries.
+- The map opens on `WORLD_BOUNDS`, then `fitBounds` to whatever comes back —
+  once per mount, so a refetch never yanks a zoomed-in user back out.
+- Always surface `truncated`: it means more wells fall in the box than `limit`
+  returned, so the pins on screen are an incomplete picture.
+- Basemaps (`BASEMAPS` in `src/lib/map.ts`) are keyless by design — OSM streets
+  and Esri World Imagery, attribution-only, no map vendor account. The four
+  `VITE_MAP_*` vars in `.env.example` repoint them at a keyed provider.
+  Leaflet's light-only chrome is re-themed at the bottom of `src/index.css`
+  (which is also where `leaflet.css` is imported, so those overrides always
+  come after it in the bundle).
 
 ## Architecture conventions
 
