@@ -55,6 +55,8 @@ export const CODE_MESSAGES: Record<string, string> = {
     'The coordinates are not valid WGS84 latitude/longitude values.',
   WELL_COORDINATE_OUTSIDE_COUNTRY:
     'The coordinates fall outside the project’s configured countries.',
+  WELL_INVALID_BOUNDS:
+    'That map area is invalid. Pan or zoom the map and try again.',
   CLIENT_NO_COUNTRIES:
     'This project has no countries configured yet. Ask a super-admin to set them before capturing wells.',
   READING_NOT_FOUND: 'That reading could not be found in this project.',

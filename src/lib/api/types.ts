@@ -170,6 +170,31 @@ export interface Reading {
   updated_at: string
 }
 
+/**
+ * A compact map marker from `GET /wells/search` — deliberately *not* the full
+ * well record. Fetch `GET /wells/{id}` when a marker is selected.
+ */
+export interface WellMarker {
+  id: string
+  latitude: number
+  longitude: number
+  name: string | null
+  well_type: WellType | null
+  well_status: WellStatus | null
+  well_confirmed: boolean
+  review_status: ReviewStatus
+}
+
+/** Envelope returned by GET /wells/search (bounding-box query). */
+export interface WellSearchResponse {
+  items: WellMarker[]
+  count: number
+  limit: number
+  /** True when more wells fall inside the box than `limit` returned — the
+   *  viewport must be shrunk to see the rest. */
+  truncated: boolean
+}
+
 /** Paginated list envelope returned by GET /wells. */
 export interface PaginatedWells {
   items: Well[]
