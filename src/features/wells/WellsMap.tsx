@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import * as L from 'leaflet'
 import { Crosshair, Loader2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -24,7 +25,8 @@ import {
   WELL_STATUS_LABELS,
   WELL_TYPE_LABELS,
 } from '@/lib/wells'
-import { useWellSearch } from './queries'
+import { useAuth } from '@/providers/auth-context'
+import { useWellSearch, wellSearchOptions } from './queries'
 
 /** Wait this long after the user stops panning before re-querying. */
 const MOVE_DEBOUNCE_MS = 350
@@ -71,7 +73,10 @@ export function WellsMap({
   const [bounds, setBounds] = useState<WellBounds>(WORLD_BOUNDS)
   const [basemap, setBasemap] = useState<Basemap>(BASEMAPS[0])
   const [selected, setSelected] = useState<WellMarker | null>(null)
+  const [isFitting, setIsFitting] = useState(false)
 
+  const queryClient = useQueryClient()
+  const { currentClientId } = useAuth()
   const search = useWellSearch(bounds, reviewStatus)
   const items = search.data?.items
   const truncated = search.data?.truncated ?? false
@@ -84,9 +89,12 @@ export function WellsMap({
     // Canvas keeps thousands of circle markers smooth while panning.
     const map = L.map(containerRef.current, {
       preferCanvas: true,
-      zoomControl: true,
+      // Our basemap/fit toolbar owns the top-left corner, so the zoom control
+      // moves to the top right rather than sitting underneath it.
+      zoomControl: false,
       worldCopyJump: true,
     }).setView(WORLD_VIEW.center, WORLD_VIEW.zoom)
+    L.control.zoom({ position: 'topright' }).addTo(map)
     mapRef.current = map
 
     const syncBounds = () => {
@@ -204,14 +212,40 @@ export function WellsMap({
     )
   }, [items])
 
-  const resetView = useCallback(() => {
-    didFitRef.current = false
+  /**
+   * Frame every well the tenant has, in a single map movement.
+   *
+   * Fetching the world box directly (rather than moving the map there and
+   * letting the viewport query catch up) is what keeps this from zooming all
+   * the way out and then back in. Usually served straight from cache, since
+   * it's the same query key the map opened with.
+   */
+  const fitToAllWells = useCallback(async () => {
+    const map = mapRef.current
+    if (!map) return
     setSelected(null)
-    mapRef.current?.setView(WORLD_VIEW.center, WORLD_VIEW.zoom)
-  }, [])
+    setIsFitting(true)
+    try {
+      const data = await queryClient.fetchQuery(
+        wellSearchOptions(currentClientId, WORLD_BOUNDS, reviewStatus),
+      )
+      if (!data.items.length) {
+        map.setView(WORLD_VIEW.center, WORLD_VIEW.zoom)
+        return
+      }
+      map.fitBounds(
+        L.latLngBounds(
+          data.items.map((w) => [w.latitude, w.longitude] as L.LatLngTuple),
+        ),
+        { padding: [48, 48], maxZoom: FIT_MAX_ZOOM },
+      )
+    } finally {
+      setIsFitting(false)
+    }
+  }, [queryClient, currentClientId, reviewStatus])
 
   const count = items?.length ?? 0
-  const isBusy = search.isLoading || search.isFetching
+  const isBusy = search.isLoading || search.isFetching || isFitting
 
   return (
     <div className="space-y-3">
@@ -221,41 +255,53 @@ export function WellsMap({
         </Alert>
       )}
 
+      {/* Kept above the map rather than floating over it: the bottom corners
+          belong to the legend and Leaflet's attribution, and an incomplete
+          set of pins is worth more than a corner tooltip's worth of space. */}
+      {truncated && (
+        <Alert variant="info">
+          <AlertDescription>
+            Showing the first {count} wells in this area — there are more. Zoom
+            in or shrink the viewport to load the rest.
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="relative h-[600px] max-h-[calc(100vh-19rem)] min-h-[380px] overflow-hidden rounded-lg border border-border">
         <div ref={containerRef} className="size-full" />
 
         {/* Overlays sit above Leaflet's control pane (z-index 800) and stay
             click-through except where they hold real controls. */}
         <div className="pointer-events-none absolute inset-0 z-[900] flex flex-col justify-between p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="pointer-events-auto flex items-center gap-2">
-              <div className="flex overflow-hidden rounded-md border border-border bg-background shadow-sm">
-                {BASEMAPS.map((b) => (
-                  <button
-                    key={b.id}
-                    type="button"
-                    onClick={() => setBasemap(b)}
-                    className={cn(
-                      'px-3 py-1.5 text-xs font-medium transition-colors',
-                      basemap.id === b.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                    )}
-                  >
-                    {b.label}
-                  </button>
-                ))}
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="bg-background shadow-sm"
-                onClick={resetView}
-              >
-                <Crosshair className="size-4" />
-                Fit to wells
-              </Button>
+          {/* Top-left only — the top right is Leaflet's zoom control. */}
+          <div className="flex items-start gap-2">
+            <div className="pointer-events-auto flex overflow-hidden rounded-md border border-border bg-background shadow-sm">
+              {BASEMAPS.map((b) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onClick={() => setBasemap(b)}
+                  className={cn(
+                    'px-3 py-1.5 text-xs font-medium transition-colors',
+                    basemap.id === b.id
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                  )}
+                >
+                  {b.label}
+                </button>
+              ))}
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="pointer-events-auto bg-background shadow-sm"
+              onClick={fitToAllWells}
+              disabled={isFitting}
+            >
+              <Crosshair className="size-4" />
+              Fit to wells
+            </Button>
 
             {isBusy && (
               <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
@@ -330,13 +376,6 @@ export function WellsMap({
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
-
-            {truncated && (
-              <div className="pointer-events-auto max-w-sm rounded-md border border-[var(--color-warning)]/40 bg-background px-3 py-2 text-xs shadow-sm">
-                Showing the first {count} wells in this area — there are more.
-                Zoom in to load the rest.
               </div>
             )}
           </div>

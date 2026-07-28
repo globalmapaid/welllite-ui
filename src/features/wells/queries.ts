@@ -24,21 +24,21 @@ export function useWells(params: ListWellsParams) {
 }
 
 /**
- * Markers inside the current map viewport. `bounds` must already be normalised
- * by `boundsFromViewport` — this hook does not validate them.
+ * Query config for one bounding box, shared by the hook below and by imperative
+ * `fetchQuery` calls (the map's "fit to wells" needs the world's markers to
+ * frame them, without first moving the map there to trigger a render).
  *
- * Keeps the previous page of markers while a pan is in flight so pins don't
- * blink out; check `truncated` on the result to tell the user to zoom in.
+ * `bounds` must already be normalised by `boundsFromViewport`.
  */
-export function useWellSearch(
+export function wellSearchOptions(
+  clientId: string | null,
   bounds: WellBounds,
   reviewStatus: ReviewStatus | undefined,
 ) {
-  const { currentClientId } = useAuth()
-  return useQuery({
+  return {
     queryKey: [
       ...WELLS_KEY,
-      currentClientId,
+      clientId,
       'search',
       boundsKey(bounds),
       reviewStatus ?? 'all',
@@ -49,6 +49,22 @@ export function useWellSearch(
         review_status: reviewStatus,
         limit: SEARCH_MAX_LIMIT,
       }),
+  }
+}
+
+/**
+ * Markers inside the current map viewport.
+ *
+ * Keeps the previous page of markers while a pan is in flight so pins don't
+ * blink out; check `truncated` on the result to tell the user to zoom in.
+ */
+export function useWellSearch(
+  bounds: WellBounds,
+  reviewStatus: ReviewStatus | undefined,
+) {
+  const { currentClientId } = useAuth()
+  return useQuery({
+    ...wellSearchOptions(currentClientId, bounds, reviewStatus),
     enabled: !!currentClientId,
     placeholderData: keepPreviousData,
   })
