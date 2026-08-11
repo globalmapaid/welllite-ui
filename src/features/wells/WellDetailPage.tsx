@@ -27,6 +27,7 @@ import {
 import { useAuth } from '@/providers/auth-context'
 import { useReadings } from '@/features/readings/queries'
 import { useWell } from './queries'
+import { WellLocationMap } from './WellLocationMap'
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -146,6 +147,24 @@ export function WellDetailPage() {
                 <Detail label="Review note">{w.review_note}</Detail>
               )}
             </dl>
+          ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base">Location</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {well.isLoading ? (
+            <Skeleton className="h-[320px] w-full rounded-lg" />
+          ) : w ? (
+            <WellLocationMap
+              latitude={w.latitude}
+              longitude={w.longitude}
+              reviewStatus={w.review_status}
+              name={w.name}
+            />
           ) : null}
         </CardContent>
       </Card>

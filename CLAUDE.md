@@ -44,6 +44,13 @@ well records, so a marker click links to `/wells/{id}` for detail.
   once per mount, so a refetch never yanks a zoomed-in user back out.
 - Always surface `truncated`: it means more wells fall in the box than `limit`
   returned, so the pins on screen are an incomplete picture.
+- `WellLocationMap.tsx` is the detail-page counterpart: one marker at the
+  well's own coordinates, no API call (the well record already has them), and
+  wheel zoom stays off until you click the map so the page keeps scrolling.
+  It opens at **zoom 6** — the first question is which part of the country the
+  well is in, and street tiles are blank at village scale out there anyway.
+  Zooming in (or switching to satellite) is the user's move; "Recenter" puts
+  the opening view back.
 - Basemaps (`BASEMAPS` in `src/lib/map.ts`) are keyless by design — OSM streets
   and Esri World Imagery, attribution-only, no map vendor account. The four
   `VITE_MAP_*` vars in `.env.example` repoint them at a keyed provider.
