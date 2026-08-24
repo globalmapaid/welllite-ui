@@ -1,6 +1,6 @@
 import { ArrowLeft } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { NeedsProject } from '@/components/NeedsProject'
 import { PageHeader } from '@/components/PageHeader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -26,6 +26,7 @@ import {
 } from '@/lib/wells'
 import { useAuth } from '@/providers/auth-context'
 import { useReadings } from '@/features/readings/queries'
+import { useWellChangeHistory } from '@/features/well-changes/queries'
 import { useWell } from './queries'
 import { WellLocationMap } from './WellLocationMap'
 
@@ -45,8 +46,10 @@ const dash = <span className="text-muted-foreground">—</span>
 export function WellDetailPage() {
   const { currentClientId } = useAuth()
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
   const well = useWell(id)
   const readings = useReadings({ well_id: id, limit: 200 })
+  const changes = useWellChangeHistory(id)
 
   const backLink = (
     <Link
@@ -80,6 +83,10 @@ export function WellDetailPage() {
 
   const w: Well | undefined = well.data
   const readingItems = readings.data?.items ?? []
+  const changeItems = changes.data?.items ?? []
+  const pendingChanges = changeItems.filter(
+    (c) => c.review_status === 'pending',
+  ).length
 
   return (
     <div>
@@ -166,6 +173,80 @@ export function WellDetailPage() {
               name={w.name}
             />
           ) : null}
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="text-base">
+            Survey history{changes.data ? ` (${changes.data.total})` : ''}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Surveys filed against this well.
+            {pendingChanges > 0 &&
+              ` ${pendingChanges} ${pendingChanges === 1 ? 'is' : 'are'} waiting for review.`}
+          </p>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {changes.isError ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {messageForError(changes.error)}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Submitted</TableHead>
+                  <TableHead>Request</TableHead>
+                  <TableHead>Decided</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {changes.isLoading &&
+                  Array.from({ length: 2 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={3}>
+                        <Skeleton className="h-6 w-full" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                {!changes.isLoading &&
+                  changeItems.map((c) => (
+                    <TableRow
+                      key={c.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/well-changes/${c.id}`)}
+                    >
+                      <TableCell className="font-medium">
+                        {formatDateTime(c.created_at)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={REVIEW_STATUS_VARIANT[c.review_status]}>
+                          {REVIEW_STATUS_LABELS[c.review_status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDateTime(c.reviewed_at)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                {!changes.isLoading && changeItems.length === 0 && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="py-8 text-center text-muted-foreground"
+                    >
+                      No surveys have been filed against this well yet.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

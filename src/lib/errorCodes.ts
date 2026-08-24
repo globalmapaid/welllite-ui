@@ -59,6 +59,11 @@ export const CODE_MESSAGES: Record<string, string> = {
     'That map area is invalid. Pan or zoom the map and try again.',
   CLIENT_NO_COUNTRIES:
     'This project has no countries configured yet. Ask a super-admin to set them before capturing wells.',
+  WELL_CHANGE_NOT_FOUND: 'That change request could not be found in this project.',
+  WELL_CHANGE_NOT_PENDING:
+    'This change request has already been decided by another reviewer.',
+  AUTH_SUPERVISOR_REQUIRED:
+    'Only supervisors and project admins can review change requests.',
   READING_NOT_FOUND: 'That reading could not be found in this project.',
   READING_ALREADY_EXISTS: 'A reading with this identifier already exists.',
   SYNC_CONFLICT: 'Another sync is in progress. Please try again.',
