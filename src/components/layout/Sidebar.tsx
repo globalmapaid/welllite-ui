@@ -1,4 +1,5 @@
 import {
+  ClipboardCheck,
   Database,
   Droplets,
   Gauge,
@@ -28,6 +29,7 @@ const NAV: NavItem[] = [
   { to: '/users', label: 'Users', icon: UsersRound, superAdmin: true },
   { to: '/members', label: 'Team', icon: Users, clientAdmin: true },
   { to: '/wells', label: 'Wells', icon: Gauge },
+  { to: '/well-changes', label: 'Change requests', icon: ClipboardCheck },
   { to: '/readings', label: 'Readings', icon: Droplets },
   { to: '/profile', label: 'Profile', icon: UserCircle },
 ]

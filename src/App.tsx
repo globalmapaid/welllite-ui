@@ -12,6 +12,8 @@ import { VerifyEmailPage } from '@/features/auth/VerifyEmailPage'
 import { DashboardPage } from '@/features/dashboard/DashboardPage'
 import { NotFoundPage } from '@/features/NotFoundPage'
 import { ReadingsPage } from '@/features/readings/ReadingsPage'
+import { WellChangeDetailPage } from '@/features/well-changes/WellChangeDetailPage'
+import { WellChangesPage } from '@/features/well-changes/WellChangesPage'
 import { WellsPage } from '@/features/wells/WellsPage'
 import { WellDetailPage } from '@/features/wells/WellDetailPage'
 import { MembersPage } from '@/features/members/MembersPage'
@@ -37,6 +39,8 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/wells" element={<WellsPage />} />
           <Route path="/wells/:id" element={<WellDetailPage />} />
+          <Route path="/well-changes" element={<WellChangesPage />} />
+          <Route path="/well-changes/:id" element={<WellChangeDetailPage />} />
           <Route path="/readings" element={<ReadingsPage />} />
           <Route element={<RequireClientAdmin />}>
             <Route path="/members" element={<MembersPage />} />

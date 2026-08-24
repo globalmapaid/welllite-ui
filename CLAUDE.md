@@ -5,24 +5,27 @@ Web admin console for the `welllite-api` backend (sibling repo at
 
 ## What this app covers
 
-The backend's `auth`, `clients`, `wells`, and `readings` routers. Wells and
-readings are **read-only monitoring views** here — the field capture (and
-offline `sync/batch`) lives in the separate React Native app, and the backend's
-review-moderation endpoints aren't built yet, so `review_status` is display-only.
+The backend's `auth`, `clients`, `wells`, `readings` and `well-changes` routers.
+Wells and readings are **read-only monitoring views** here — the field capture
+(and offline `sync/batch`) lives in the separate React Native app. Wells are
+edited only indirectly, by reviewing a change request (see below).
 
 - Wells: `WellsPage.tsx` owns the shared review-status filter and a List/Map
   toggle — `WellsList` (paginated table, in the same file) and `WellsMap.tsx`
-  (bounding-box map). Detail is `WellDetailPage.tsx` (survey fields + that
-  well's readings). API in `src/lib/api/wells.ts`, hooks in
-  `features/wells/queries.ts`.
+  (bounding-box map). Detail is `WellDetailPage.tsx` (survey fields, location
+  map, that well's survey history and readings). API in `src/lib/api/wells.ts`,
+  hooks in `features/wells/queries.ts`.
 - Readings: list (`src/features/readings/`), API in `src/lib/api/readings.ts`.
-- Enum labels/badge tones live in `src/lib/wells.ts`.
-- Both areas are tenant-scoped; the queries are disabled until `currentClientId`
-  is set and the page shows `<NeedsProject />` for an unscoped super-admin.
+- Change requests: `src/features/well-changes/` (see below).
+- Enum labels/badge tones live in `src/lib/wells.ts`, change-request ones in
+  `src/lib/wellChanges.ts`.
+- All three areas are tenant-scoped; the queries are disabled until
+  `currentClientId` is set and the page shows `<NeedsProject />` for an
+  unscoped super-admin.
 
 `sync/batch` is intentionally **not** implemented in this console (offline sync
-is a mobile concern). If the backend later ships photo upload or approve/discard
-moderation, add them as new endpoint modules mirroring the above.
+is a mobile concern). If the backend later ships photo upload, add it as a new
+endpoint module mirroring the above.
 
 ## Wells map view
 
@@ -57,6 +60,48 @@ well records, so a marker click links to `/wells/{id}` for detail.
   Leaflet's light-only chrome is re-themed at the bottom of `src/index.css`
   (which is also where `leaflet.css` is imported, so those overrides always
   come after it in the bundle).
+
+## Change requests & review
+
+Wells are the master record and they arrive **unverified** — bulk-imported or
+captured in the field, always starting at `review_status: "pending"` ("we hold
+this record, nobody has confirmed it"). Field surveys never edit a well: each
+is filed as a **change request**, a full snapshot of what the surveyor believes
+the well should be. `src/features/well-changes/` is the reviewer's side of that.
+
+- `WellChangesPage.tsx` — the queue (`GET /well-changes`), opening on `pending`
+  because that's the work to do. The list payload has **no** `changes[]` or
+  `stale`; both only exist on the detail read, so the table deliberately doesn't
+  try to summarise a diff per row.
+- `WellChangeDetailPage.tsx` + `ChangeDiff.tsx` — the diff, ordered
+  `changed` → `cleared` → `filled` (`sortChanges`). `changed` means the survey
+  *contradicts* a value that was already there, so it leads; `filled` is the
+  routine blank-completed case. `location` arrives as one row whose values are
+  `{latitude, longitude}` objects, not two scalar rows — `formatChangeValue()`
+  handles that.
+- `ReviewPanel.tsx` — the decision, which is really **two independent
+  judgements** and is deliberately not one "Approve" button: `decision`
+  (`approved` applies the whole snapshot, `discarded` leaves the well untouched)
+  and, only when approving, `well_review_status` (is the well now verified, or
+  still `pending`?). The common real outcome is *approved + still pending* — the
+  survey improved the record without completing it — so `pending` is the default
+  there. `well_review_status` is required when approving and **must be omitted**
+  when discarding; both are 422s otherwise. Approval is all-or-nothing (no
+  per-field accept).
+- `changes[]` is recomputed against the well's *current* state on every read, so
+  an **approved request comes back with an empty diff** (already applied) and a
+  discarded one still shows what it would have changed — both misleading as a
+  diff. The detail page therefore switches on `review_status`: a decided request
+  renders the submitted snapshot plus an Outcome card, i.e. as history.
+- `stale` means the well was modified after submission, so the diff shows values
+  the submitter never saw. Surface it — applying still overwrites with the whole
+  snapshot.
+- A request can only be decided once. A 409 `WELL_CHANGE_NOT_PENDING` means
+  another reviewer got there first: toast it as information, refresh, and leave
+  the queue — never retry.
+- Reading the queue is open to any member; deciding needs supervisor or
+  client-admin (403 `AUTH_SUPERVISOR_REQUIRED`), so the route is ungated and the
+  *panel* is gated on `role`.
 
 ## Architecture conventions
 

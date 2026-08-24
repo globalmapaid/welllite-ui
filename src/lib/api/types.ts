@@ -211,6 +211,114 @@ export interface PaginatedReadings {
   offset: number
 }
 
+// ---- Well change requests (survey review queue) ----
+
+/** How a proposed value differs from the well as it currently stands. */
+export type ChangeType = 'filled' | 'changed' | 'cleared'
+
+/** The value carried by the synthetic `location` diff row. */
+export interface LatLon {
+  latitude: number
+  longitude: number
+}
+
+/** One field-level difference between the live well and a submitted survey. */
+export interface WellFieldChange {
+  /** A well field name, or the synthetic `location` (lat+lon move together). */
+  field: string
+  change_type: ChangeType
+  /** Shape follows `field`: string, number, null, or `LatLon` for `location`. */
+  current_value: unknown
+  proposed_value: unknown
+}
+
+/**
+ * A survey filed against an existing well — a *full snapshot* of what the
+ * surveyor believes the well should be. Surveys never edit a well directly:
+ * nothing here has touched the well until a reviewer approves it, and approval
+ * applies the whole snapshot (there is no per-field accept).
+ */
+export interface WellChangeRequest {
+  id: string
+  client_id: string
+  well_id: string
+  /** Device-generated idempotency key, unique per tenant. */
+  client_uuid: string
+  submitted_by: string
+  latitude: number
+  longitude: number
+  well_confirmed: boolean
+  name: string | null
+  well_type: WellType | null
+  well_status: WellStatus | null
+  daily_users_estimate: number | null
+  distance_to_other_water_km: string | null
+  opening_diameter_cm: string | null
+  owner_name: string | null
+  owner_mobile: string | null
+  comments: string | null
+  /** The *request's* own state — not the well's. */
+  review_status: ReviewStatus
+  reviewed_by: string | null
+  reviewed_at: string | null
+  review_note: string | null
+  /** When the snapshot was written onto the well (approved requests only). */
+  applied_at: string | null
+  /** The well's `updated_at` at the moment the survey was submitted. */
+  base_updated_at: string
+  created_at: string
+  updated_at: string
+}
+
+/** `GET /well-changes/{id}` — the request plus its diff against the live well. */
+export interface WellChangeDetail extends WellChangeRequest {
+  /**
+   * Differences from the well *as it stands now*, recomputed on every read —
+   * so an approved request comes back with an empty array (its snapshot is
+   * already applied), while a discarded one still shows what it would have
+   * changed. Only a pending request's diff is a decision aid.
+   */
+  changes: WellFieldChange[]
+  /** The well was modified after this survey was submitted, so the diff
+   *  reflects values the submitter never saw. */
+  stale: boolean
+}
+
+/** Paginated envelope from `GET /well-changes` and `GET /wells/{id}/changes`. */
+export interface PaginatedWellChanges {
+  items: WellChangeRequest[]
+  total: number
+  limit: number
+  offset: number
+}
+
+/** Accept the submitted snapshot onto the well, or reject it outright. */
+export type ReviewDecision = 'approved' | 'discarded'
+
+/** Whether the well itself counts as verified once the survey is applied. */
+export type WellVerdict = 'pending' | 'approved'
+
+/**
+ * The two independent judgements a reviewer makes in one call: what happens to
+ * the proposed data, and — only then — whether the well is now verified.
+ */
+export interface ReviewWellChangePayload {
+  decision: ReviewDecision
+  /** Required when approving; must be omitted when discarding (422 either way). */
+  well_review_status?: WellVerdict
+  review_note?: string
+}
+
+/**
+ * `POST /well-changes/{id}/review` — the decided request alongside the well it
+ * was judged against. Note this is *not* a `WellChangeDetail`: the response
+ * carries no `changes[]`/`stale`, since a decided request's diff is meaningless.
+ */
+export interface ReviewWellChangeResponse {
+  change: WellChangeRequest
+  well: Well
+}
+
 // ---- Request payloads ----
 
 export interface RegisterRequest {
