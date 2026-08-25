@@ -3,6 +3,7 @@ import type {
   PaginatedWells,
   ReviewStatus,
   Well,
+  WellReviewPayload,
   WellSearchResponse,
   WellStatus,
   WellType,
@@ -96,4 +97,20 @@ export const wellsApi = {
 
   /** A single well by server id (404 WELL_NOT_FOUND if not in this tenant). */
   get: (id: string) => request<Well>(`/wells/${id}`, { auth: 'access' }),
+
+  /**
+   * Record a supervisor's verdict on whether this well's data is confirmed,
+   * returning the updated well. Requires supervisor or client-admin (403
+   * `AUTH_SUPERVISOR_REQUIRED`).
+   *
+   * This never edits survey data — that's what change requests carry. It is
+   * also reversible: an approved well can be returned to `pending` when fresh
+   * doubt arises, unlike a change request, which is decided once.
+   */
+  review: (id: string, payload: WellReviewPayload) =>
+    request<Well>(`/wells/${id}/review`, {
+      method: 'POST',
+      body: payload,
+      auth: 'access',
+    }),
 }

@@ -1,10 +1,11 @@
-import { ArrowLeft } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { ArrowLeft, BadgeCheck } from 'lucide-react'
+import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { NeedsProject } from '@/components/NeedsProject'
 import { PageHeader } from '@/components/PageHeader'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -29,6 +30,7 @@ import { useReadings } from '@/features/readings/queries'
 import { useWellChangeHistory } from '@/features/well-changes/queries'
 import { useWell } from './queries'
 import { WellLocationMap } from './WellLocationMap'
+import { WellReviewDialog } from './WellReviewDialog'
 
 function Detail({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -44,9 +46,10 @@ function Detail({ label, children }: { label: string; children: ReactNode }) {
 const dash = <span className="text-muted-foreground">—</span>
 
 export function WellDetailPage() {
-  const { currentClientId } = useAuth()
+  const { currentClientId, role } = useAuth()
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const [reviewOpen, setReviewOpen] = useState(false)
   const well = useWell(id)
   const readings = useReadings({ well_id: id, limit: 200 })
   const changes = useWellChangeHistory(id)
@@ -87,6 +90,7 @@ export function WellDetailPage() {
   const pendingChanges = changeItems.filter(
     (c) => c.review_status === 'pending',
   ).length
+  const canReview = role === 'supervisor' || role === 'client_admin'
 
   return (
     <div>
@@ -96,12 +100,34 @@ export function WellDetailPage() {
         description="Survey details and Static Water Level readings for this well."
         actions={
           w && (
-            <Badge variant={REVIEW_STATUS_VARIANT[w.review_status]}>
-              {REVIEW_STATUS_LABELS[w.review_status]}
-            </Badge>
+            <>
+              <Badge variant={REVIEW_STATUS_VARIANT[w.review_status]}>
+                {REVIEW_STATUS_LABELS[w.review_status]}
+              </Badge>
+              {canReview && (
+                <Button
+                  variant={w.review_status === 'approved' ? 'outline' : 'default'}
+                  size="sm"
+                  onClick={() => setReviewOpen(true)}
+                >
+                  <BadgeCheck className="size-4" />
+                  {w.review_status === 'approved'
+                    ? 'Change verification'
+                    : 'Verify well'}
+                </Button>
+              )}
+            </>
           )
         }
       />
+
+      {w && canReview && (
+        <WellReviewDialog
+          well={w}
+          open={reviewOpen}
+          onClose={() => setReviewOpen(false)}
+        />
+      )}
 
       <Card>
         <CardContent className="pt-6">
@@ -150,6 +176,13 @@ export function WellDetailPage() {
               <Detail label="Owner mobile">{w.owner_mobile || dash}</Detail>
               <Detail label="Captured">{formatDateTime(w.created_at)}</Detail>
               <Detail label="Comments">{w.comments || dash}</Detail>
+              <Detail label="Last reviewed">
+                {w.reviewed_at ? (
+                  formatDateTime(w.reviewed_at)
+                ) : (
+                  <span className="text-muted-foreground">Never reviewed</span>
+                )}
+              </Detail>
               {w.review_note && (
                 <Detail label="Review note">{w.review_note}</Detail>
               )}

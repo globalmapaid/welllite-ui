@@ -211,6 +211,25 @@ export interface PaginatedReadings {
   offset: number
 }
 
+/**
+ * A supervisor's verdict on whether a well's data is confirmed. Deliberately
+ * narrower than `ReviewStatus`: a well has no `discarded` state anywhere in the
+ * system, and the endpoint 422s if you send one.
+ */
+export type WellVerificationStatus = 'pending' | 'approved'
+
+/**
+ * `POST /wells/{id}/review` — a judgement, never an edit. It sets only the
+ * verification verdict; survey data is changed through change requests.
+ *
+ * `review_note` is written verbatim, so **omitting it clears any existing
+ * note**. Send the current note back to preserve it.
+ */
+export interface WellReviewPayload {
+  review_status: WellVerificationStatus
+  review_note?: string | null
+}
+
 // ---- Well change requests (survey review queue) ----
 
 /** How a proposed value differs from the well as it currently stands. */
