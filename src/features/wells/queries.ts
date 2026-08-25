@@ -1,4 +1,10 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import type { WellReviewPayload } from '@/lib/api/types'
 import {
   SEARCH_MAX_LIMIT,
   wellsApi,
@@ -74,5 +80,20 @@ export function useWell(id: string | undefined) {
     queryKey: [...WELLS_KEY, currentClientId, 'detail', id],
     queryFn: () => wellsApi.get(id!),
     enabled: !!currentClientId && !!id,
+  })
+}
+
+/**
+ * Record a supervisor's verdict on a well.
+ *
+ * Invalidates every wells query, not just this well's: `review_status` is a
+ * filter on the list and colours the map's markers, so both go stale.
+ */
+export function useReviewWell() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: WellReviewPayload }) =>
+      wellsApi.review(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: WELLS_KEY }),
   })
 }

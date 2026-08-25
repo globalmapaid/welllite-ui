@@ -84,6 +84,29 @@ well records, so a marker click links to `/wells/{id}` for detail.
   (which is also where `leaflet.css` is imported, so those overrides always
   come after it in the bundle).
 
+## Verifying a well directly
+
+`POST /wells/{id}/review` (`WellReviewDialog.tsx`, supervisor+) answers one
+question — *has a supervisor confirmed this record?* — and **never touches
+survey data**; correcting data is still a change request. Keep that separation
+visible in the UI: the dialog is a verdict, not an edit form.
+
+- `pending` doesn't mean incomplete, it means unconfirmed. A well can be
+  perfectly filled in and still be pending, which is exactly the case this
+  route exists for: before it, a complete field capture could only reach
+  `approved` by being surveyed a second time.
+- The verdict is **only** `pending | approved` (`WellVerificationStatus`).
+  `discarded` is rejected — a 422 on `__root__`, so it can't be mapped to a
+  field; the toggle simply can't express it.
+- Unlike a change request (decided once, immutable), this is *current state* and
+  is **reversible in both directions** — an approved well can go back to
+  `pending` when doubt arises.
+- **`review_note` is written verbatim, so omitting it clears any existing
+  note.** The dialog therefore pre-fills the well's current note and always
+  sends it back; an empty box would silently erase another reviewer's note.
+- The mutation invalidates all of `['wells']`, not just the detail:
+  `review_status` filters the list and colours the map's markers.
+
 ## Change requests & review
 
 Wells are the master record and they arrive **unverified** — bulk-imported or
