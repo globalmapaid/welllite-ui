@@ -27,6 +27,15 @@ export const REVIEW_STATUSES: readonly ReviewStatus[] = [
   'discarded',
 ]
 
+export const WELL_TYPES: readonly WellType[] = [
+  'borehole',
+  'hand_dug',
+  'spring',
+  'oasis',
+]
+
+export const WELL_STATUSES: readonly WellStatus[] = ['working', 'broken']
+
 /** Badge tone for each review status. */
 export const REVIEW_STATUS_VARIANT: Record<
   ReviewStatus,

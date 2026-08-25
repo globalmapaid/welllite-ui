@@ -6,8 +6,8 @@ import { Link } from 'react-router-dom'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import type { ReviewStatus, WellMarker } from '@/lib/api/types'
-import type { WellBounds } from '@/lib/api/wells'
+import type { WellMarker } from '@/lib/api/types'
+import type { WellBounds, WellFilters } from '@/lib/api/wells'
 import { messageForError } from '@/lib/errorCodes'
 import {
   BASEMAPS,
@@ -55,10 +55,10 @@ interface Tracked {
 }
 
 export function WellsMap({
-  reviewStatus,
+  filters,
 }: {
-  /** Shared with the list view; undefined means "all statuses". */
-  reviewStatus: ReviewStatus | undefined
+  /** Shared with the list view, so both show the same wells. */
+  filters: WellFilters
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<L.Map | null>(null)
@@ -77,7 +77,7 @@ export function WellsMap({
 
   const queryClient = useQueryClient()
   const { currentClientId } = useAuth()
-  const search = useWellSearch(bounds, reviewStatus)
+  const search = useWellSearch(bounds, filters)
   const items = search.data?.items
   const truncated = search.data?.truncated ?? false
 
@@ -227,7 +227,7 @@ export function WellsMap({
     setIsFitting(true)
     try {
       const data = await queryClient.fetchQuery(
-        wellSearchOptions(currentClientId, WORLD_BOUNDS, reviewStatus),
+        wellSearchOptions(currentClientId, WORLD_BOUNDS, filters),
       )
       if (!data.items.length) {
         map.setView(WORLD_VIEW.center, WORLD_VIEW.zoom)
@@ -242,7 +242,7 @@ export function WellsMap({
     } finally {
       setIsFitting(false)
     }
-  }, [queryClient, currentClientId, reviewStatus])
+  }, [queryClient, currentClientId, filters])
 
   const count = items?.length ?? 0
   const isBusy = search.isLoading || search.isFetching || isFitting
