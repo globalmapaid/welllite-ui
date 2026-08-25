@@ -10,8 +10,8 @@ Wells and readings are **read-only monitoring views** here — the field capture
 (and offline `sync/batch`) lives in the separate React Native app. Wells are
 edited only indirectly, by reviewing a change request (see below).
 
-- Wells: `WellsPage.tsx` owns the shared review-status filter and a List/Map
-  toggle — `WellsList` (paginated table, in the same file) and `WellsMap.tsx`
+- Wells: `WellsPage.tsx` owns the shared filter bar and a List/Map toggle —
+  `WellsList` (paginated table, in the same file) and `WellsMap.tsx`
   (bounding-box map). Detail is `WellDetailPage.tsx` (survey fields, location
   map, that well's survey history and readings). API in `src/lib/api/wells.ts`,
   hooks in `features/wells/queries.ts`.
@@ -26,6 +26,29 @@ edited only indirectly, by reviewing a change request (see below).
 `sync/batch` is intentionally **not** implemented in this console (offline sync
 is a mobile concern). If the backend later ships photo upload, add it as a new
 endpoint module mirroring the above.
+
+## Wells filtering
+
+`WellsPage` holds one `WellFilterState` and hands the same derived `WellFilters`
+to both views, because `/wells` and `/wells/search` take an identical filter set
+(`review_status`, `well_type`, `well_status`, `q`) — keep it that way, or
+toggling to Map silently shows wells the controls above it exclude.
+
+- `WellFilters` (in `src/lib/api/wells.ts`) is extended by *both*
+  `ListWellsParams` and `SearchWellsParams`, and one `appendFilters()` serialises
+  it for both calls, so the two endpoints can't drift.
+- `q` is a case-insensitive substring match on **name only**; wells with a null
+  name never match, and `%` is escaped server-side rather than acting as a
+  wildcard. The server does **not** trim, so `appendFilters()` trims and drops a
+  blank `q` — otherwise a stray space matches every name containing one.
+- Only the text input is debounced (300 ms, `useDebouncedValue`); the selects
+  apply immediately, since a select is a single decisive click.
+- Both views are keyed on the active filter set: the list so paging resets to
+  page 1 (a narrower filter can otherwise strand you past the last page), the map
+  so it refits to what the filters now select.
+- The list's empty state distinguishes "no wells match these filters" from "no
+  wells captured yet" — `hasActiveFilters()` in `wellFilters.ts`, which is split
+  out of `WellsFilters.tsx` for clean fast-refresh.
 
 ## Wells map view
 

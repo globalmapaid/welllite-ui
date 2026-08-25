@@ -1,10 +1,10 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import type { ReviewStatus } from '@/lib/api/types'
 import {
   SEARCH_MAX_LIMIT,
   wellsApi,
   type ListWellsParams,
   type WellBounds,
+  type WellFilters,
 } from '@/lib/api/wells'
 import { boundsKey } from '@/lib/map'
 import { useAuth } from '@/providers/auth-context'
@@ -33,7 +33,7 @@ export function useWells(params: ListWellsParams) {
 export function wellSearchOptions(
   clientId: string | null,
   bounds: WellBounds,
-  reviewStatus: ReviewStatus | undefined,
+  filters: WellFilters,
 ) {
   return {
     queryKey: [
@@ -41,12 +41,12 @@ export function wellSearchOptions(
       clientId,
       'search',
       boundsKey(bounds),
-      reviewStatus ?? 'all',
+      filters,
     ],
     queryFn: () =>
       wellsApi.search({
         ...bounds,
-        review_status: reviewStatus,
+        ...filters,
         limit: SEARCH_MAX_LIMIT,
       }),
   }
@@ -58,13 +58,10 @@ export function wellSearchOptions(
  * Keeps the previous page of markers while a pan is in flight so pins don't
  * blink out; check `truncated` on the result to tell the user to zoom in.
  */
-export function useWellSearch(
-  bounds: WellBounds,
-  reviewStatus: ReviewStatus | undefined,
-) {
+export function useWellSearch(bounds: WellBounds, filters: WellFilters) {
   const { currentClientId } = useAuth()
   return useQuery({
-    ...wellSearchOptions(currentClientId, bounds, reviewStatus),
+    ...wellSearchOptions(currentClientId, bounds, filters),
     enabled: !!currentClientId,
     placeholderData: keepPreviousData,
   })

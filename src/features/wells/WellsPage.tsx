@@ -7,8 +7,6 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { NativeSelect } from '@/components/ui/native-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
@@ -18,21 +16,30 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { ReviewStatus } from '@/lib/api/types'
+import type { WellFilters } from '@/lib/api/wells'
 import { messageForError } from '@/lib/errorCodes'
+import { useDebouncedValue } from '@/lib/useDebouncedValue'
 import { cn, formatDateTime } from '@/lib/utils'
 import {
   REVIEW_STATUS_LABELS,
   REVIEW_STATUS_VARIANT,
-  REVIEW_STATUSES,
   WELL_STATUS_LABELS,
   WELL_TYPE_LABELS,
 } from '@/lib/wells'
 import { useAuth } from '@/providers/auth-context'
 import { useWells } from './queries'
+import {
+  EMPTY_FILTERS,
+  hasActiveFilters,
+  type WellFilterState,
+} from './wellFilters'
+import { WellsFilters } from './WellsFilters'
 import { WellsMap } from './WellsMap'
 
 const PAGE_SIZE = 20
+
+/** How long typing settles before it becomes a request. */
+const SEARCH_DEBOUNCE_MS = 300
 
 type View = 'list' | 'map'
 
@@ -44,7 +51,24 @@ const VIEWS = [
 export function WellsPage() {
   const { currentClientId } = useAuth()
   const [view, setView] = useState<View>('list')
-  const [reviewStatus, setReviewStatus] = useState<ReviewStatus | ''>('')
+  const [filters, setFilters] = useState<WellFilterState>(EMPTY_FILTERS)
+
+  // Only the free-text field is debounced; the selects are single decisive
+  // clicks and should take effect at once.
+  const debouncedQ = useDebouncedValue(filters.q, SEARCH_DEBOUNCE_MS)
+
+  const apiFilters = useMemo<WellFilters>(
+    () => ({
+      review_status: filters.reviewStatus || undefined,
+      well_type: filters.wellType || undefined,
+      well_status: filters.wellStatus || undefined,
+      q: debouncedQ.trim() || undefined,
+    }),
+    [filters.reviewStatus, filters.wellType, filters.wellStatus, debouncedQ],
+  )
+
+  // Identity of the active filter set, used to reset paging and remount the map.
+  const filterKey = JSON.stringify(apiFilters)
 
   return (
     <div>
@@ -80,37 +104,24 @@ export function WellsPage() {
         <NeedsProject />
       ) : (
         <>
-          <div className="mb-3 flex items-center gap-2">
-            <Label htmlFor="review-filter" className="text-muted-foreground">
-              Review status
-            </Label>
-            <NativeSelect
-              id="review-filter"
-              className="w-auto"
-              value={reviewStatus}
-              onChange={(e) =>
-                setReviewStatus(e.target.value as ReviewStatus | '')
-              }
-            >
-              <option value="">All</option>
-              {REVIEW_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {REVIEW_STATUS_LABELS[s]}
-                </option>
-              ))}
-            </NativeSelect>
-          </div>
+          <WellsFilters value={filters} onChange={setFilters} />
 
           {view === 'map' ? (
-            // Keyed on the tenant so switching projects rebuilds the map and
-            // re-fits it to the new tenant's wells.
+            // Keyed on tenant + filters so the map refits to whatever the
+            // filters now select, instead of holding a view framed around
+            // wells that have just dropped out of scope.
             <WellsMap
-              key={currentClientId}
-              reviewStatus={reviewStatus || undefined}
+              key={`${currentClientId}:${filterKey}`}
+              filters={apiFilters}
             />
           ) : (
-            // Keyed on the filter so changing it resets pagination to page 1.
-            <WellsList key={reviewStatus} reviewStatus={reviewStatus} />
+            // Keyed on the filters so changing them resets paging to page 1 —
+            // otherwise a narrower filter can strand you past the last page.
+            <WellsList
+              key={filterKey}
+              filters={apiFilters}
+              filtered={hasActiveFilters(filters)}
+            />
           )}
         </>
       )}
@@ -118,17 +129,20 @@ export function WellsPage() {
   )
 }
 
-function WellsList({ reviewStatus }: { reviewStatus: ReviewStatus | '' }) {
+function WellsList({
+  filters,
+  filtered,
+}: {
+  filters: WellFilters
+  /** True when any filter is set — distinguishes "no matches" from "no wells". */
+  filtered: boolean
+}) {
   const navigate = useNavigate()
   const [offset, setOffset] = useState(0)
 
   const params = useMemo(
-    () => ({
-      review_status: reviewStatus || undefined,
-      limit: PAGE_SIZE,
-      offset,
-    }),
-    [reviewStatus, offset],
+    () => ({ ...filters, limit: PAGE_SIZE, offset }),
+    [filters, offset],
   )
   const wells = useWells(params)
   const items = wells.data?.items ?? []
@@ -220,8 +234,8 @@ function WellsList({ reviewStatus }: { reviewStatus: ReviewStatus | '' }) {
                   colSpan={6}
                   className="py-10 text-center text-muted-foreground"
                 >
-                  {reviewStatus
-                    ? `No ${REVIEW_STATUS_LABELS[reviewStatus].toLowerCase()} wells.`
+                  {filtered
+                    ? 'No wells match these filters.'
                     : 'No wells captured yet.'}
                 </TableCell>
               </TableRow>
