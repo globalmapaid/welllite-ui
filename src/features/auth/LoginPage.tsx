@@ -25,6 +25,7 @@ export function LoginPage() {
   const { applyLoginResponse } = useAuth()
   const [topError, setTopError] = useState<string | null>(null)
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null)
+  const [noMembershipEmail, setNoMembershipEmail] = useState<string | null>(null)
 
   const form = useForm<Values>({
     resolver: zodResolver(schema),
@@ -34,6 +35,7 @@ export function LoginPage() {
   const onSubmit = async (values: Values) => {
     setTopError(null)
     setUnverifiedEmail(null)
+    setNoMembershipEmail(null)
     try {
       const res = await authApi.login({
         email: values.email,
@@ -45,6 +47,11 @@ export function LoginPage() {
     } catch (err) {
       if (err instanceof ApiError && err.code === 'AUTH_EMAIL_NOT_VERIFIED') {
         setUnverifiedEmail(values.email)
+      }
+      // Without a membership there's no way in, so offer the one thing they
+      // can still do on their own.
+      if (err instanceof ApiError && err.code === 'AUTH_NO_ACTIVE_MEMBERSHIP') {
+        setNoMembershipEmail(values.email)
       }
       setTopError(messageForError(err))
     }
@@ -78,6 +85,20 @@ export function LoginPage() {
                   >
                     Verify now
                   </Link>
+                </>
+              )}
+              {noMembershipEmail && (
+                <>
+                  {' '}
+                  Or{' '}
+                  <Link
+                    to="/delete-account"
+                    state={{ email: noMembershipEmail }}
+                    className="font-medium underline"
+                  >
+                    delete your account
+                  </Link>
+                  .
                 </>
               )}
             </AlertDescription>

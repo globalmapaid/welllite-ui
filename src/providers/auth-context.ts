@@ -23,6 +23,8 @@ export interface AuthContextValue {
   /** Super-admin: scope the session into a tenant. */
   switchTenant: (clientId: string) => Promise<void>
   logout: () => Promise<void>
+  /** Drop local tokens/state without calling the API (tokens already revoked). */
+  discardSession: () => void
   refreshUser: () => Promise<void>
 }
 

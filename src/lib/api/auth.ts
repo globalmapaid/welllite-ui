@@ -88,4 +88,17 @@ export const authApi = {
     }),
 
   me: () => request<CurrentUser>('/auth/me', { auth: 'access' }),
+
+  /**
+   * Permanently delete the caller's own account. Authenticates with email +
+   * password, never a token: a user with no active membership can't obtain one
+   * (login 403s AUTH_NO_ACTIVE_MEMBERSHIP) but must still be able to delete.
+   * 204 on success; every session is revoked server-side.
+   */
+  deleteAccount: (email: string, password: string) =>
+    request<void>('/auth/delete-account', {
+      method: 'POST',
+      body: { email, password },
+      auth: 'none',
+    }),
 }

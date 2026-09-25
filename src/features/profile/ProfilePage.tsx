@@ -1,10 +1,12 @@
-import { LogOut } from 'lucide-react'
+import { LogOut, Trash2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { PageHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
@@ -87,6 +89,27 @@ export function ProfilePage() {
             </Button>
           </CardContent>
         </Card>
+
+        {/* The API refuses super-admin deletion, so don't offer it. */}
+        {!isSuperAdmin && (
+          <Card className="border-destructive/40 lg:col-span-2">
+            <CardHeader>
+              <CardTitle>Delete account</CardTitle>
+              <CardDescription>
+                Permanently delete your account and sign out everywhere. Well
+                data you collected stays with its project.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0">
+              <Button variant="destructive" asChild>
+                <Link to="/delete-account">
+                  <Trash2 className="size-4" />
+                  Delete account…
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   )
