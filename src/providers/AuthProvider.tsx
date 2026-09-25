@@ -36,14 +36,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('unauthenticated')
   }, [])
 
-  // Reset + redirect when the API layer reports an unrecoverable auth failure.
+  // Reset when the API layer reports an unrecoverable auth failure. No redirect
+  // here: ProtectedRoute (and org selection) already send an unauthenticated
+  // user to /login, and forcing it would bounce public pages — /delete-account,
+  // /reset-password — whenever the browser still holds a dead session.
   useEffect(() => {
     setOnAuthLost(() => {
       reset()
       queryClient.clear()
-      navigate('/login', { replace: true })
     })
-  }, [navigate, queryClient, reset])
+  }, [queryClient, reset])
 
   // Bootstrap session from any persisted tokens.
   useEffect(() => {
