@@ -4,6 +4,9 @@ import { ApiError } from './api/http'
  * Maps the backend's stable error/success codes to friendly UI copy.
  * This is the single place to localise: swap this map for a per-locale lookup.
  * Unknown codes fall back to the envelope's English `message`.
+ *
+ * `{name}` placeholders are filled from the error's `params`; list params are
+ * joined as prose ("A, B and C").
  */
 export const CODE_MESSAGES: Record<string, string> = {
   // Auth — errors
@@ -26,6 +29,10 @@ export const CODE_MESSAGES: Record<string, string> = {
   AUTH_INVALID_TOKEN: 'Your session has expired. Please sign in again.',
   AUTH_NO_TENANT_SELECTED: 'Select a project to continue.',
   AUTH_SUPER_ADMIN_REQUIRED: 'You do not have permission to do that.',
+  AUTH_SUPER_ADMIN_CANNOT_DELETE:
+    'Super-admin accounts can’t be deleted here. Ask another super-admin to remove it.',
+  AUTH_LAST_CLIENT_ADMIN_CANNOT_DELETE:
+    'You’re the only admin of {clients}. Make someone else an admin there before deleting your account.',
 
   // Clients
   CLIENT_NOT_FOUND: 'That project could not be found.',
@@ -79,10 +86,23 @@ export const CODE_MESSAGES: Record<string, string> = {
   UNKNOWN: 'Something went wrong. Please try again.',
 }
 
+const listFormat = new Intl.ListFormat('en', { type: 'conjunction' })
+
+/** Fill `{name}` placeholders from params; unknown placeholders are left as-is. */
+function interpolate(template: string, params: Record<string, unknown>): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+    const value = params[key]
+    if (Array.isArray(value)) return listFormat.format(value.map(String))
+    return value == null ? match : String(value)
+  })
+}
+
 /** Resolve a friendly, top-level message for any thrown error. */
 export function messageForError(err: unknown): string {
   if (err instanceof ApiError) {
-    return CODE_MESSAGES[err.code] ?? err.message ?? CODE_MESSAGES.UNKNOWN
+    const template = CODE_MESSAGES[err.code]
+    if (template) return interpolate(template, err.params)
+    return err.message ?? CODE_MESSAGES.UNKNOWN
   }
   if (err instanceof TypeError) {
     // fetch network failure (server down / CORS)

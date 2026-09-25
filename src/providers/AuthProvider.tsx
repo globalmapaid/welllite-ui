@@ -128,6 +128,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     navigate('/login', { replace: true })
   }, [navigate, queryClient, reset])
 
+  // The server already revoked every token (e.g. the account was deleted), so
+  // there's nothing to log out of — just forget the session locally.
+  const discardSession = useCallback(() => {
+    clearSession()
+    reset()
+    queryClient.clear()
+  }, [queryClient, reset])
+
   return (
     <AuthContext.Provider
       value={{
@@ -141,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         selectMembership,
         switchTenant,
         logout,
+        discardSession,
         refreshUser: loadUser,
       }}
     >

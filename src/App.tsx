@@ -3,6 +3,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { RequireClientAdmin } from '@/components/RequireClientAdmin'
 import { RequireSuperAdmin } from '@/components/RequireSuperAdmin'
+import { DeleteAccountPage } from '@/features/auth/DeleteAccountPage'
 import { ForgotPasswordPage } from '@/features/auth/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/LoginPage'
 import { RegisterPage } from '@/features/auth/RegisterPage'
@@ -31,6 +32,9 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/select-project" element={<SelectOrganisationPage />} />
+      {/* Public even for signed-in users: it authenticates with email + password,
+          so people with no membership (who can't sign in) can still reach it. */}
+      <Route path="/delete-account" element={<DeleteAccountPage />} />
 
       {/* Authenticated app */}
       <Route element={<ProtectedRoute />}>
